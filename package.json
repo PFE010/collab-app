@@ -12,7 +12,6 @@
     "probot-app"
   ],
   "scripts": {
-    "build": "tsc",
     "start": "probot run ./index.js",
     "test": "jest"
   },
