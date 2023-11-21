@@ -1,7 +1,4 @@
-import { Probot } from "probot";
-
-export = (app: Probot) => {
-
+module.exports = async (app) => {
   app.log.info("app was loaded!")
   app.on("issues.opened", async (context) => {
     const issueComment = context.issue({
@@ -14,12 +11,5 @@ export = (app: Probot) => {
       body: "Thanks for closing this issue!",
     });
     await context.octokit.issues.createComment(issueComment);
-  });
-
-
-  // For more information on building apps:
-  // https://probot.github.io/docs/
-
-  // To get your app running against GitHub, see:
-  // https://probot.github.io/docs/development/
-};
+  }); 
+}; 
