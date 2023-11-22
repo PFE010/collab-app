@@ -1,9 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var mysql_1 = require("mysql");
-var config = require("../config");
+var mysql = require("mysql");
+var config = require("../config.js");
+
 function query(sql) {
-    var con = mysql_1.default.createConnection(config.db);
+    var con = mysql.createConnection(config.db);
     con.connect(function (err) {
         if (err) {
             console.error('error connecting: ' + err.stack);

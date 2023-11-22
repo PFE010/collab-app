@@ -1,4 +1,4 @@
-function emptyOrRows(rows: any) {
+function emptyOrRows(rows) {
     if (!rows) {
       return [];
     }
