@@ -12,15 +12,15 @@
     "probot-app"
   ],
   "scripts": {
-    "build": "tsc",
-    "start": "probot run ./lib/index.js",
-    "test": "jest"
+    "start": "probot run ./index.js"
   },
   "dependencies": {
+    "@probot/adapter-azure-functions": "^1.0.23",
     "mysql": "^2.18.1",
-    "probot": "^12.2.4"
+    "probot": "^12.3.4"
   },
   "devDependencies": {
+    "@azure/functions": "4.1.0",
     "@types/jest": "^29.0.0",
     "@types/mysql": "^2.15.24",
     "@types/node": "^18.18.10",
