@@ -7,7 +7,6 @@
 
 # Run server
  In VScode terminal:
- npm run build
  npm start
 
 

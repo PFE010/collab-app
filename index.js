@@ -13,6 +13,34 @@ module.exports = async (app) => {
     await context.octokit.issues.createComment(issueComment);
   });
 
+  app.on("issues.closed", async (context) => {
+    var issueComment = context.issue({
+      body: "Thanks for closing this issue!",
+    });
+    await context.octokit.issues.createComment(issueComment);
+  });
+
+  //Labels --> had to enable it manually on the repo
+  app.on("label.created", async (context) => {
+   
+    //app.log.info(context);
+      
+  });
+
+  app.on("label.deleted", async (context) => {
+    app.log.info(context);
+    //const { owner, repo, label } = context.payload;
+    //app.log.info(`Label deleted: ${label.name}`);
+  
+  });
+  
+  app.on("label.edited", async (context) => {
+    //app.log.info(context);
+    //const { owner, repo, label } = context.payload;
+    //app.log.info(`Label deleted: ${label.name}`);
+  
+  });
+
   // Pull request
   app.on('pull_request.opened', async (context) => {
     try {
@@ -71,8 +99,18 @@ module.exports = async (app) => {
 
   });
   app.on('pull_request.labeled', async (context) => {
+    app.log.info(context);
 
   });
+
+  app.on('pull_request.unlabeled', async (context) => {
+    console.log("hhhhh");
+    const { owner, repo, pull_request, label } = context.payload;
+  
+    app.log.info(`Label '${label.name}' removed from pull request #${pull_request.number}`);
+  
+  });
+  
   app.on('pull_request.ready_for_review', async (context) => {
 
   });
@@ -91,7 +129,7 @@ module.exports = async (app) => {
   app.on('pull_request_review.dismissed', async (context) => {
 
   });
-  app.on('pull_request_review.edtited', async (context) => {
+  app.on('pull_request_review.edited', async (context) => {
 
   });
   app.on('pull_request_review.submitted', async (context) => {
