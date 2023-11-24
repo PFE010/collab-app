@@ -3,10 +3,11 @@ dotenv.config();
 
 const config = {
     db: {
-      host: "localhost",
+      host: "mysql-22a42974-etsmtl-pfe010.a.aivencloud.com",
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      database: "test"
+      database: "defaultdb",
+      port: "28279"
     }
   };
 
