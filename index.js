@@ -104,10 +104,14 @@ module.exports = async (app) => {
   });
 
   app.on('pull_request.unlabeled', async (context) => {
-    console.log("hhhhh");
-    const { owner, repo, pull_request, label } = context.payload;
+    const { action,repository, pull_request, label, user } = context.payload;
   
-    app.log.info(`Label '${label.name}' removed from pull request #${pull_request.number}`);
+    app.log.info(`Action done: ${action}\n 
+    Removed from pull request: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
+    PR updated time: ${pull_request.updated_at}, PR status: ${pull_request.state}\n
+    Label name: ${label.name}, label id: ${label.id}\n 
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    user login: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
   
   });
   
