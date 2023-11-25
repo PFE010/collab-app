@@ -16,15 +16,31 @@ function endConnection() {
     });
 }
 
-function query(sql, callback) {
+function queryCallback(sql, callback) {
     connection.query(sql, function (err, result) {
         if (err) throw err;
         callback(result);
     });
 }
 
+function query(sql) {
+    connection.query(sql, function (err, result) {
+        if (err) throw err;
+        console.log("query success");
+    });
+}
+
+function queryValues(sql, values) {
+    connection.query(sql, values, function (err, result) {
+        if (err) throw err;
+        console.log("Number of records inserted: " + result.affectedRows);
+    });
+}
+
 module.exports = {
     query,
+    queryCallback,
+    queryValues,
     connect,
     endConnection
 }
