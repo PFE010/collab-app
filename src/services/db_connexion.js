@@ -1,24 +1,30 @@
 var mysql = require("mysql");
 var config = require("../../config");
 
-function query(sql) {
-    const connection = mysql.createConnection(config.db);
+const connection = mysql.createConnection(config.db);
 
+function connect() {
     connection.connect(function(err) {
         if (err) throw err;
         console.log("Connected!");
     });
+}
 
-    connection.query(sql, function (err, result) {
-        if (err) throw err;
-        console.log(result);
-    });
-
+function endConnection() {
     connection.end(function(err) {
         // The connection is terminated now
     });
 }
 
+function query(sql, callback) {
+    connection.query(sql, function (err, result) {
+        if (err) throw err;
+        callback(result);
+    });
+}
+
 module.exports = {
-    query
+    query,
+    connect,
+    endConnection
 }

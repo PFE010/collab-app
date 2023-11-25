@@ -5,7 +5,11 @@ function getfulltable(tableName) {
 }
 
 function seeTables() {
-    return db_connexion.query("SHOW TABLES;")
+    db_connexion.query("SHOW TABLES;", (result) => {return result})
+}
+
+function createUser() {
+
 }
 
 module.exports = {
