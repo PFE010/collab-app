@@ -1,10 +1,7 @@
-function emptyOrRows(rows) {
-    if (!rows) {
-      return [];
-    }
-    return rows;
+  function printCallback(result) {
+    console.log(result)
   }
   
   module.exports = {
-    emptyOrRows
+    printCallback
   }
