@@ -73,6 +73,11 @@ module.exports = async (app) => {
    * - Merge la PR (done)
    * - Reopen la PR (done) 
    * - Description de la PR (done)
+   * - Ajouter un commit (done)
+   * - Ajouter des commentaires à la PR -- issue_comment
+   * - Ajouter des commentaires en tant que review -- pull_request_review
+   * - pull_request_review_thread
+   * 
 -Ajout de commentaires
 -Ajout des commits (suite a une demande de changement)
 -Temps de réponse aux commentaires
@@ -124,7 +129,7 @@ module.exports = async (app) => {
   });
   
 
-  // added description later on
+  // added description later on --works
   app.on('pull_request.edited', async (context) => {
     const { action,repository, pull_request} = context.payload;
   
@@ -194,7 +199,7 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time updated: ${pull_request.updated_at}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Assigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
     Assignee : ${assignee.login}, user_id: ${assignee.id}`);
@@ -208,11 +213,34 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time updated: ${pull_request.updated_at}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Unassigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
     Unassignee : ${assignee.login}, user_id: ${assignee.id}`);
 
+  });
+
+  //Commit on a PR -- works (event triggered when a new commit is added to a PR)
+  app.on('pull_request.synchronize', async context => {
+    const { action,repository, pull_request, assignee} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time updated: ${pull_request.updated_at},
+    Nbr of commits: ${pull_request.commits}, PR title: ${pull_request.title}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Commit done by : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+
+    if (pull_request.body) {
+      app.log.info(`PR description: ${pull_request.body} \n`);
+    }
+
+    
+  });
+
+  app.on('issue_comment.reaction.created', async context => {
+    // Do something when a reaction is added to a comment
+    app.log.info(`Action done: ${action}`);
   });
 
   // Pull request review
@@ -220,9 +248,13 @@ module.exports = async (app) => {
   app.on('pull_request_review.dismissed', async (context) => {
 
   });
+
+  //Existing comment on a PR is edited
   app.on('pull_request_review.edited', async (context) => {
 
   });
+
+  //Comment submitted on a PR
   app.on('pull_request_review.submitted', async (context) => {
 
   });
@@ -232,10 +264,15 @@ module.exports = async (app) => {
   app.on('pull_request_review_comment.created', async (context) => {
 
   });
-  app.on('pull_request_review_comment.edited', async (context) => {
+  app.on('pull_request_review.edited', async (context) => {
 
   });
   app.on('pull_request_review_comment.deleted', async (context) => {
+
+  });
+
+  //PR has a thread that is resolved
+  app.on('pull_request_review_thread.resolved', async (context) => {
 
   });
 }; 
