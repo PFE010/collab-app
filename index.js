@@ -69,15 +69,14 @@ module.exports = async (app) => {
    * - Création de PR (done)
    * - Supprimer la PR (done)
    * - Ajouter un label (done)
-   * - Enlever un label 
-   * - Merge la PR
+   * - Enlever un label (done)
+   * - Merge la PR (done)
+   * - Reopen la PR (done) 
 -Ajout de commentaires
--Merge de la PR
 -Ajout des commits (suite a une demande de changement)
 -Temps de réponse aux commentaires
 -Réactions sur commentaires (pouce en bas)
 -Réactions sur commentaires (pouce en haut)
--Fermer la pull request (delete)
 -masquer un commentaire (fonctionne comme un flag de commentaire abusif/spam)
 -Accepter une suggestion de code
 -Description de la PR 
@@ -86,55 +85,39 @@ module.exports = async (app) => {
 -supprimer un commentaire
    */
 
-  // Pull request open
+  // Pull request open -- works
   app.on('pull_request.opened', async (context) => {
 
     const { action,repository, pull_request} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}\n
+    PR status: ${pull_request.state}, nbr commits: ${pull_request.commits}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
-
-    /**try {
-      const { owner, repo, number } = context.issue();
-
-      // Fetch the pull request details
-      const pullRequest = await context.github.pulls.get({
-        owner,
-        repo,
-        pull_number: number,
-      });
-
-      const username = pullRequest.data.user.login;
-
-      // Implement your reward logic here
-      // For example, you can comment on the pull request to reward the user
-      await context.github.issues.createComment({
-        owner,
-        repo,
-        issue_number: number,
-        body: `@${username} Thank you for opening this pull request! You've been rewarded! 🎉`,
-      });
-
-    } catch (error) {
-      console.error('Error occurred:', error);
-    }*/
   });
 
-  //PR closed
+  //PR closed -- works
   app.on('pull_request.closed', async (context) => {
-    const { action,repository, pull_request} = context.payload;
+    const { action, repository, pull_request } = context.payload;
   
     app.log.info(`Action done: ${action}\n 
-    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}\n
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+      PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
+      PR status: ${pull_request.state}\n
+      Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+      PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}
+      PR merged: ${pull_request.merged}`);
+  
+    // Check if the pull request is merged
+    if (pull_request.merged) {
+      app.log.info(`PR merged by: ${pull_request.merged_by.login} \n`);
+    } else {
+      app.log.info("PR was not merged. \n");
+    }
   });
+  
 
-
+  // want to see what info is out with it
   app.on('pull_request.edited', async (context) => {
     const { action,repository, pull_request} = context.payload;
   
@@ -146,7 +129,7 @@ module.exports = async (app) => {
 
   });
 
-  //works
+  //PR is being labeled --- works
   app.on('pull_request.labeled', async (context) => {
     //app.log.info(context);
     const { action,repository, pull_request, label} = context.payload;
@@ -160,7 +143,7 @@ module.exports = async (app) => {
 
   });
 
-  //works
+  //PR is being unlabeled --- works
   app.on('pull_request.unlabeled', async (context) => {
     const { action,repository, pull_request, label} = context.payload;
   
@@ -176,6 +159,8 @@ module.exports = async (app) => {
   app.on('pull_request.ready_for_review', async (context) => {
 
   });
+
+  //Reopening a PR -- works
   app.on('pull_request.reopened', async (context) => {
     const { action,repository, pull_request} = context.payload;
   
@@ -190,10 +175,31 @@ module.exports = async (app) => {
 
   });
 
+  //PR assign -- works
   app.on('pull_request.assigned', async (context) => {
 
+    const { action,repository, pull_request, assignee} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
+    PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Assigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
+    Assignee : ${assignee.login}, user_id: ${assignee.id}`);
+
   });
+
+  //PR unassign -- works
   app.on('pull_request.unassigned', async (context) => {
+
+    const { action,repository, pull_request, assignee} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
+    PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Unassigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
+    Unassignee : ${assignee.login}, user_id: ${assignee.id}`);
 
   });
 
