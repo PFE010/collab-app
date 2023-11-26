@@ -104,7 +104,7 @@ module.exports = async (app) => {
   });
 
   app.on('pull_request.unlabeled', async (context) => {
-    const { action,repository, pull_request, label, user } = context.payload;
+    const { action,repository, pull_request, label} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
     Removed from pull request: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
