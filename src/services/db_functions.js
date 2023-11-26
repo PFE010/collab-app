@@ -10,26 +10,36 @@ class DatabaseFunctions {
         return db_connexion.query("SHOW TABLES;")
     }
 
-    create_pr(url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
-        var query_string = `INSERT INTO pull_request (ID_PULL_REQUEST, URL, DESCRIPTION, TITRE, DATE_CREATION, DATE_MERGE, DATE_LAST_UPDATE, STATUS, LABELS) VALUES (${url}, ${description}, ${titre}, ${date_creation}, ${date_merge}, ${date_last_update}, ${status}, ${labels});`
-
-        console.log(query_string)
-        return db_connexion.query(`INSERT INTO pull_request (URL, DESCRIPTION, TITRE, DATE_CREATION, DATE_MERGE, DATE_LAST_UPDATE, STATUS, LABELS)
-        VALUES (
-            ${url},
-            ${description},
-            ${titre},
-            ${date_creation},
-            ${date_merge},
-            ${date_last_update},
-            ${status},
-            ${labels}
-        );
-        `)
+    create_pr(number, url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
+        return db_connexion.query(`INSERT INTO pull_request (ID_PULL_REQUEST, URL, DESCRIPTION, TITRE, DATE_CREATION, DATE_MERGE, DATE_LAST_UPDATE, STATUS, LABELS)
+         VALUES ('${number}',
+         '${url}',
+         '${description}',
+         '${titre}',
+         '${date_creation}',
+         '${date_merge}',
+         '${date_last_update}',
+         '${status}',
+         '${labels}')`)
     }
 
-    fetch_pr() {
+    edit_pr(number,  url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
+        return db_connexion.query(`
+        UPDATE pull_request 
+        SET URL = '${url}',
+            DESCRIPTION = '${description}',
+            TITRE = '${titre}',
+            DATE_CREATION = '${date_creation}',
+            DATE_MERGE = '${date_merge}',
+            DATE_LAST_UPDATE = '${date_last_update}',
+            STATUS = '${status}',
+            LABELS = '${labels}'
+        WHERE ID_PULL_REQUEST = ${number}`);
+    }
 
+    fetch_pr(number) {
+        return db_connexion.query(`SELECT * FROM pull_request
+        WHERE ID_PULL_REQUEST = ${number}`)
     }
 
     fetch_all_pr() {
