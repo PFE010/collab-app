@@ -72,6 +72,7 @@ module.exports = async (app) => {
    * - Enlever un label (done)
    * - Merge la PR (done)
    * - Reopen la PR (done) 
+   * - Description de la PR (done)
 -Ajout de commentaires
 -Ajout des commits (suite a une demande de changement)
 -Temps de réponse aux commentaires
@@ -79,7 +80,6 @@ module.exports = async (app) => {
 -Réactions sur commentaires (pouce en haut)
 -masquer un commentaire (fonctionne comme un flag de commentaire abusif/spam)
 -Accepter une suggestion de code
--Description de la PR 
 -Facteur de temps PR date ouverture / date merge
 -Resolve conversation (thread)
 -supprimer un commentaire
@@ -92,9 +92,16 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}, nbr commits: ${pull_request.commits}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, nbr commits: ${pull_request.commits}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+
+    // Check if the pull request has a description
+    if (pull_request.body) {
+      app.log.info(`PR description: ${pull_request.body} \n`);
+    } else {
+      app.log.info("PR has no description, please add one \n");
+    }
   });
 
   //PR closed -- works
@@ -103,7 +110,7 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
       PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-      PR status: ${pull_request.state}\n
+      PR url: ${pull_request.url}, PR status: ${pull_request.state}\n
       Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
       PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}
       PR merged: ${pull_request.merged}`);
@@ -117,15 +124,20 @@ module.exports = async (app) => {
   });
   
 
-  // want to see what info is out with it
+  // added description later on
   app.on('pull_request.edited', async (context) => {
     const { action,repository, pull_request} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+
+    // Check if the pull request has a description
+    if (pull_request.body) {
+      app.log.info(`PR description was added: ${pull_request.body} \n`);
+    }
 
   });
 
@@ -166,7 +178,7 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
@@ -182,7 +194,7 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Assigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
     Assignee : ${assignee.login}, user_id: ${assignee.id}`);
@@ -196,7 +208,7 @@ module.exports = async (app) => {
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time creation: ${pull_request.updated_at}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Unassigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
     Unassignee : ${assignee.login}, user_id: ${assignee.id}`);
