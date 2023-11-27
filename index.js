@@ -74,12 +74,10 @@ module.exports = async (app) => {
    * - Reopen la PR (done) 
    * - Description de la PR (done)
    * - Ajouter un commit (done)
-   * - Ajouter des commentaires à la PR -- issue_comment
+   * - Ajouter, modifier, supprimer des commentaires à la PR -- issue_comment (done)
    * - Ajouter des commentaires en tant que review -- pull_request_review
    * - pull_request_review_thread
    * 
--Ajout de commentaires
--Ajout des commits (suite a une demande de changement)
 -Temps de réponse aux commentaires
 -Réactions sur commentaires (pouce en bas)
 -Réactions sur commentaires (pouce en haut)
@@ -129,7 +127,7 @@ module.exports = async (app) => {
   });
   
 
-  // added description later on --works
+  //PR is edited when the description is added or edited --works
   app.on('pull_request.edited', async (context) => {
     const { action,repository, pull_request} = context.payload;
   
@@ -222,7 +220,7 @@ module.exports = async (app) => {
 
   //Commit on a PR -- works (event triggered when a new commit is added to a PR)
   app.on('pull_request.synchronize', async context => {
-    const { action,repository, pull_request, assignee} = context.payload;
+    const { action,repository, pull_request} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
@@ -236,6 +234,45 @@ module.exports = async (app) => {
     }
 
     
+  });
+
+  //PR is being commented on
+  app.on('issue_comment.created', async context => {
+    const { action,repository,issue, comment} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    Issue number: #${issue.number}, Issue id: ${issue.id}, PR url: ${issue.pull_request.url},\n
+    Comment id: ${comment.id}, comment total reactions: ${comment.reactions.total_count},\n
+    Comment created at: ${comment.created_at}, Comment updated at: ${comment.updated_at},\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
+    Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
+
+  });
+
+  //PR comment is being edited
+  app.on('issue_comment.edited', async context => {
+    const { action,repository,issue, comment} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    Issue number: #${issue.number}, Issue id: ${issue.id}, PR url: ${issue.pull_request.url},\n
+    Comment id: ${comment.id}, comment total reactions: ${comment.reactions.total_count},\n
+    Comment created at: ${comment.created_at}, Comment updated at: ${comment.updated_at},\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
+    Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
+
+  });
+
+  //PR comment is being deleted
+  app.on('issue_comment.deleted', async context => {
+    const { action,repository,issue, comment} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    Issue number: #${issue.number}, Issue id: ${issue.id}, PR url: ${issue.pull_request.url},\n
+    Comment id: ${comment.id}, comment total reactions: ${comment.reactions.total_count},\n
+    Comment created at: ${comment.created_at}, Comment updated at: ${comment.updated_at},\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
+    Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
+
   });
 
   app.on('issue_comment.reaction.created', async context => {
@@ -254,13 +291,24 @@ module.exports = async (app) => {
 
   });
 
-  //Comment submitted on a PR
+  //Comment submitted on a commit for review
   app.on('pull_request_review.submitted', async (context) => {
+
+    const { action,repository, pull_request, review} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    Review id: #${review.id}, review state: ${review.state}, commit id: ${review.commit_id},\n
+    Review submitted at: ${review.submitted_at}, PR id: ${pull_request.id}
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Comment made by : ${review.user.login}, user_id: ${review.user.id}\n`);
+
+    if (pull_request.body) {
+      app.log.info(`PR description: ${pull_request.body} \n`);
+    }
 
   });
 
-  // Pull request review comment
-
+  // Pull request review comment created when there is on going review
   app.on('pull_request_review_comment.created', async (context) => {
 
   });
