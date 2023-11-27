@@ -1,72 +1,5 @@
-
-
-module.exports = async (app) => {
-  var points = 0;
-
-  // Issue opened --> no points associated to it
-  /**app.log.info("app was loaded!")
-  app.on("issues.opened", async (context) => {
-    points += 2;
-    
-    const { action,repository, issue} = context.payload;
-
-    app.log.info(`Action done: ${action}\n 
-    Issue number: #${issue.number}, issue id: ${issue.id}, issue time creation: ${issue.created_at},
-    issue status: ${issue.state}\n
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    issue opened by: ${issue.user.login}, user_id: ${issue.user.id}\n
-    assigned to: ${issue.assignee.login}, user_id: ${issue.assignee.id}`);
-
-    var issueComment = context.issue({
-      body: "Thanks for opening this issue!" + points,
-    });
-    await context.octokit.issues.createComment(issueComment);
-  });
-
-  //issue closed
-  app.on("issues.closed", async (context) => {
-
-    const { action,repository, issue} = context.payload;
-
-    app.log.info(`Action done: ${action}\n 
-    Issue number: #${issue.number}, issue id: ${issue.id}, issue time creation: ${issue.created_at},
-    issue updated time: ${issue.updated_at}, issue status: ${issue.state}\n
-    Number of comments: ${issue.comments}\n 
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    issue opened by: ${issue.user.login}, user_id: ${issue.user.id}\n
-    assigned to: ${issue.assignee.login}, user_id: ${issue.assignee.id}`);
-
-    var issueComment = context.issue({
-      body: "Thanks for closing this issue!",
-    });
-    await context.octokit.issues.createComment(issueComment);
-  });*/
-
-
-  //Labels --> had to enable it manually on the repo
-  /**app.on("label.created", async (context) => {
-   
-    //app.log.info(context);
-      
-  });
-
-  app.on("label.deleted", async (context) => {
-    app.log.info(context);
-    //const { owner, repo, label } = context.payload;
-    //app.log.info(`Label deleted: ${label.name}`);
-  
-  });
-  
-  app.on("label.edited", async (context) => {
-    //app.log.info(context);
-    //const { owner, repo, label } = context.payload;
-    //app.log.info(`Label deleted: ${label.name}`);
-  
-  });*/
-
-
-  /**
-   * - Création de PR (done)
+ /**
+   * - Créer la PR (done)
    * - Supprimer la PR (done)
    * - Ajouter un label (done)
    * - Enlever un label (done)
@@ -74,19 +7,26 @@ module.exports = async (app) => {
    * - Reopen la PR (done) 
    * - Description de la PR (done)
    * - Ajouter un commit (done)
-   * - Ajouter, modifier, supprimer des commentaires à la PR -- issue_comment (done)
-   * - Ajouter des commentaires en tant que review -- pull_request_review
-   * - pull_request_review_thread
-   * 
--Temps de réponse aux commentaires
+   * - Ajouter un commentaire à la PR (done) -- issue_comment
+   * - Supprimer un commentaire à la PR (done) -- issue_comment
+   * - Modifier un commentaire à la PR (done) -- issue_comment
+   * - Accepter une suggestion du code (done) -- part of synchronize
+   * - Faire une demande de changement (done) -- part of submitted
+   * - Fermer un thread (done)
+   * - Ajouter des commentaires en tant que review (done)-- pull_request_review
+   * - Modifier des commentaires en tant que review (done)-- pull_request_review
+   * - Supprimer des commentaires en tant que review (done)-- pull_request_review
+   * - Approuver une PR (done) -- part of submitted
+
 -Réactions sur commentaires (pouce en bas)
 -Réactions sur commentaires (pouce en haut)
 -masquer un commentaire (fonctionne comme un flag de commentaire abusif/spam)
--Accepter une suggestion de code
--Facteur de temps PR date ouverture / date merge
--Resolve conversation (thread)
--supprimer un commentaire
+
+
    */
+
+module.exports = async (app) => {
+  var points = 0;
 
   // Pull request open -- works
   app.on('pull_request.opened', async (context) => {
@@ -186,7 +126,30 @@ module.exports = async (app) => {
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
   });
+
+  //PR reviewer is added
   app.on('pull_request.review_requested', async (context) => {
+    const { action,repository, pull_request, requested_reviewer} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
+    PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
+    Reviewer requested name: ${requested_reviewer.login}, Reviewer requested id: ${requested_reviewer.id}
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+
+  });
+
+   //PR reviewer is unadded
+   app.on('pull_request.review_request_removed', async (context) => {
+    const { action,repository, pull_request, requested_reviewer} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
+    PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
+    Removed reviewer requested name: ${requested_reviewer.login}, Removed reviewer requested id: ${requested_reviewer.id}
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
   });
 
@@ -220,20 +183,23 @@ module.exports = async (app) => {
 
   //Commit on a PR -- works (event triggered when a new commit is added to a PR)
   app.on('pull_request.synchronize', async context => {
-    const { action,repository, pull_request} = context.payload;
+    const { action,repository, pull_request, sender} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
     PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time updated: ${pull_request.updated_at},
     Nbr of commits: ${pull_request.commits}, PR title: ${pull_request.title}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    Commit done by : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+    Commit done by : ${sender.login}, user_id: ${sender.id}\n`);
 
     if (pull_request.body) {
       app.log.info(`PR description: ${pull_request.body} \n`);
     }
 
-    
+    if(sender.id != pull_request.user.id){
+      app.log.info(`There was a suggestion of code done by: ${sender.login} on the PR which belongs to ${pull_request.user.login} \n`);
+    }
+
   });
 
   //PR is being commented on
@@ -282,18 +248,13 @@ module.exports = async (app) => {
 
   // Pull request review
 
+  //Not needed for now
   app.on('pull_request_review.dismissed', async (context) => {
 
   });
 
   //Existing comment on a PR is edited
   app.on('pull_request_review.edited', async (context) => {
-
-  });
-
-  //Comment submitted on a commit for review
-  app.on('pull_request_review.submitted', async (context) => {
-
     const { action,repository, pull_request, review} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
@@ -308,19 +269,72 @@ module.exports = async (app) => {
 
   });
 
-  // Pull request review comment created when there is on going review
+  //Comment submitted on a commit for review or when changes are requested or when approuved
+  app.on('pull_request_review.submitted', async (context) => {
+
+    const { action,repository, pull_request, review} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    Review id: #${review.id}, review state: ${review.state}, commit id: ${review.commit_id},\n
+    Review submitted at: ${review.submitted_at}, PR id: ${pull_request.id}
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Comment made by : ${review.user.login}, user_id: ${review.user.id}\n`);
+
+    if (pull_request.body) {
+      app.log.info(`PR description: ${pull_request.body} \n`);
+    }
+
+    if(review.state === "changes_requested"){
+      app.log.info(`Changes have been requested by ${review.user.login} on ${pull_request.user.login}'s PR`);
+    }
+
+    if(review.state === "approved"){
+      app.log.info(`PR has been approved by ${review.user.login} of ${pull_request.user.login}`);
+    }
+
+  });
+
+  //Commenting directly on the code,then finishing review
   app.on('pull_request_review_comment.created', async (context) => {
+    const { action,repository, pull_request, comment} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR id: #${pull_request.id}, Comment id: ${comment.id}, Commit id: ${comment.commit_id}, PR request id:${comment.pull_request_review_id}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
   });
-  app.on('pull_request_review.edited', async (context) => {
+   //Comment on the code being edited
+  app.on('pull_request_review_comment.edited', async (context) => {
 
+    const { action,repository, pull_request, comment, sender} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR id: #${pull_request.id}, Comment id: ${comment.id}, Commit id: ${comment.commit_id}, PR request id:${comment.pull_request_review_id}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n
+    Edited by: ${sender.login}`);
   });
+
+  //Comment on the code being deleted
   app.on('pull_request_review_comment.deleted', async (context) => {
+    const { action,repository, pull_request, comment, sender} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR id: #${pull_request.id}, Comment id: ${comment.id}, Commit id: ${comment.commit_id}, PR request id:${comment.pull_request_review_id}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n
+    Deleted by: ${sender.login}`);
 
   });
 
   //PR has a thread that is resolved
   app.on('pull_request_review_thread.resolved', async (context) => {
-
+    const { action,repository, pull_request, sender} = context.payload;
+  
+    app.log.info(`Action done: ${action}\n 
+    PR id: #${pull_request.id}, \n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Resolved by : ${sender.login}, user_id: ${sender.id}\n`);
   });
 }; 
