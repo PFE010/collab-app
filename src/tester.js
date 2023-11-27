@@ -3,8 +3,9 @@ var db_con = require("./services/db_connexion");
 
 db_con.connect();
 
-db_functions_1.createUser(['leo', 'lapointe', 'leo-paul.lapointe.1@ens.etsmtl.ca']);
-db_functions_1.getfulltable("utilisateur");
+//db_functions_1.createBadges([['testbadge1', 'desc1'], ['testbadge2', 'desc2']]);
+//db_functions_1.deleteBadge(2);
+db_functions_1.getfulltable('badge');
 
 db_con.endConnection();
 
