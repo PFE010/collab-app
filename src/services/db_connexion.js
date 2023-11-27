@@ -24,8 +24,13 @@ function queryCallback(sql, callback) {
 }
 
 function query(sql) {
+    console.log("test")
+
     connection.query(sql, function (err, result) {
+
         if (err) throw err;
+        console.log(result)
+
         console.log("query success");
     });
 }

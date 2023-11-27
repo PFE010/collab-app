@@ -3,6 +3,10 @@ var helper = require("../helper");
 
 
 class DatabaseFunctions {
+    constructor() {
+        db_connexion.connect();
+    }
+
     getfulltable(tableName) {
         return (0, db_connexion.default)("SELECT * FROM ".concat(tableName));
     }
@@ -140,6 +144,10 @@ class DatabaseFunctions {
             console.error(err);
         }
     }
+
+    closeConnection() {
+        db_connexion.endConnection();
+    } 
 }
 
 module.exports = { DatabaseFunctions: DatabaseFunctions }
