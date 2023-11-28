@@ -15,17 +15,14 @@ class DatabaseFunctions {
         return db_connexion.query("SHOW TABLES;")
     }
 
-    create_pr(number, url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
-        return db_connexion.query(`INSERT INTO pull_request (ID_PULL_REQUEST, URL, DESCRIPTION, TITRE, DATE_CREATION, DATE_MERGE, DATE_LAST_UPDATE, STATUS, LABELS)
-         VALUES ('${number}',
-         '${url}',
-         '${description}',
-         '${titre}',
-         '${date_creation}',
-         '${date_merge}',
-         '${date_last_update}',
-         '${status}',
-         '${labels}')`)
+    createPR(url, description, date_creation, date_merge, date_last_update, status, labels) {
+        let values = [url, description, date_creation, date_merge, date_last_update, status, labels];
+        try {
+            db_connexion.queryValues("INSERT INTO pull_request (url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values);
+        }
+        catch(err) {
+            console.error(err);
+        }
     }
 
     edit_pr(number,  url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
@@ -73,16 +70,6 @@ class DatabaseFunctions {
         let values = [nom, prenom, courriel];
         try {
             db_connexion.queryValues("INSERT INTO utilisateur (nom, prenom, courriel) VALUES (?, ?, ?)", values);
-        }
-        catch(err) {
-            console.error(err);
-        }
-    }
-    
-    createPR(url, description, date_creation, date_merge, date_last_update, status, labels) {
-        let values = [url, description, date_creation, date_merge, date_last_update, status, labels];
-        try {
-            db_connexion.queryValues("INSERT INTO pull_request (url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values);
         }
         catch(err) {
             console.error(err);
