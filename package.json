@@ -12,7 +12,7 @@
     "probot-app"
   ],
   "scripts": {
-    "start": "node ./index_test.js"
+    "start": "node ./index.js"
   },
   "dependencies": {
     "@probot/adapter-azure-functions": "^1.0.23",
