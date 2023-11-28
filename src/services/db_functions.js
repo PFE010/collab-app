@@ -7,6 +7,10 @@ class DatabaseFunctions {
         db_connexion.connect();
     }
 
+    closeConnection() {
+        db_connexion.endConnection();
+    } 
+    
     getfulltable(tableName) {
         return (0, db_connexion.default)("SELECT * FROM ".concat(tableName));
     }
@@ -14,7 +18,7 @@ class DatabaseFunctions {
     seeTables() {
         return db_connexion.query("SHOW TABLES;")
     }
-
+    
     createPR(url, description, date_creation, date_merge, date_last_update, status, labels) {
         let values = [url, description, date_creation, date_merge, date_last_update, status, labels];
         try {
@@ -132,9 +136,54 @@ class DatabaseFunctions {
         }
     }
 
-    closeConnection() {
-        db_connexion.endConnection();
-    } 
+    addBadgePaliers(values) {
+        try{
+            db_connexion.queryValues(`INSERT INTO badge_palier (id_badge, id_palier) VALUES ?`, values);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    addPullRequestUser(role, userId, prId) {
+        let values = [role, userId, prId];
+        try{
+            db_connexion.queryValues(`INSERT INTO utilisateur_pull_request (role, id_utilisateur, id_pull_request) VALUES ?`, values);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    addUserBadge(userId, badgeId, progression, numero_palier) {
+        let values = [userId, badgeId, progression, numero_palier];
+        try{
+            db_connexion.queryValues(`INSERT INTO utilisateur_badge (id_utilisateur, id_badge, progression, numero_palier) VALUES ?`, values);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    addPoints(numPoints, userId) {
+        let values = [numPoints, userId];
+        try{
+            db_connexion.queryValues(`UPDATE utilisateur SET points = points + ? WHERE id_utilisateur = ?`, values);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    removePoints(numPoints, userId) {
+        let values = [numPoints, userId];
+        try{
+            db_connexion.queryValues(`UPDATE utilisateur SET points = points - ? WHERE id_utilisateur = ?`, values);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
 }
 
 module.exports = { DatabaseFunctions: DatabaseFunctions }
