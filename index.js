@@ -241,11 +241,6 @@ module.exports = async (app) => {
 
   });
 
-  app.on('issue_comment.reaction.created', async context => {
-    // Do something when a reaction is added to a comment
-    app.log.info(`Action done: ${action}`);
-  });
-
   // Pull request review
 
   //Not needed for now
@@ -330,11 +325,26 @@ module.exports = async (app) => {
 
   //PR has a thread that is resolved
   app.on('pull_request_review_thread.resolved', async (context) => {
-    const { action,repository, pull_request, sender} = context.payload;
+    const { action, repository, pull_request, sender, thread } = context.payload;
   
     app.log.info(`Action done: ${action}\n 
-    PR id: #${pull_request.id}, \n
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    Resolved by : ${sender.login}, user_id: ${sender.id}\n`);
+      PR id: #${pull_request.id}, \n
+      Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+      Resolved by: ${sender.login}, user_id: ${sender.id}\n`);
+  
+    for (const comment of thread.comments) {
+      app.log.info(`Comment id: ${comment.id}, Pull Request Review ID: ${comment.pull_request_review_id}\n`);
+  
+      const thumbsUp = comment.reactions['+1'];
+      const thumbsDown = comment.reactions['-1'];
+  
+      if (thumbsUp === 1) {
+        app.log.info(`Thumbs up`);
+      }
+      if (thumbsDown === 1) {
+        app.log.info(`Thumbs down`);
+      }
+    }
   });
+  
 }; 
