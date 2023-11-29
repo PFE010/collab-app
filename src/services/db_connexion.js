@@ -17,12 +17,10 @@ function endConnection() {
 }
 
 function query(sql) {
-    console.log("test")
-
-    connection.query(sql, function (err, result) {
+    connection.query(sql, function (err, result, fields) {
         if (err) throw err;
-        console.log(result)
         console.log("query success");
+        return;
     });
 }
 
