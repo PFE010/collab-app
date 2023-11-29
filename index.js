@@ -1,3 +1,9 @@
+const { DatabaseFunctions } = require('./src/services/db_functions')
+const express = require('express')
+const cors = require("cors");
+const app = express()
+app.use(cors());
+
  /**
    * - Créer la PR (done)
    * - Supprimer la PR (done)
@@ -25,8 +31,27 @@
 
    */
 
-module.exports = async (app) => {
-  var points = 0;
+module.exports = async (app, { getRouter }) => {
+  app.webhooks.onAny((event, { setHeaders }) => {
+    setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    });
+  });
+
+  const db_functions = new DatabaseFunctions()
+
+  // Get an express router to expose new HTTP endpoints
+  const router = getRouter("/collab-app");
+
+  // Use any middleware
+  router.use(require("express").static("public"));
+
+  // Add a new route
+  router.get("/pullRequests", cors(), (req, res) => {
+    db_functions.fetch_all_pr((result) => res.send(result));
+  });
 
   // Pull request open -- works
   app.on('pull_request.opened', async (context) => {

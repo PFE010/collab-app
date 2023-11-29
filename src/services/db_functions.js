@@ -6,10 +6,6 @@ class DatabaseFunctions {
     constructor() {
         db_connexion.connect();
     }
-
-    getfulltable(tableName) {
-        return (0, db_connexion.default)("SELECT * FROM ".concat(tableName));
-    }
     
     seeTables() {
         return db_connexion.query("SHOW TABLES;")
@@ -44,8 +40,8 @@ class DatabaseFunctions {
         WHERE ID_PULL_REQUEST = ${number}`)
     }
 
-    fetch_all_pr() {
-        return db_connexion.query("SELECT * FROM pull_request")
+    fetch_all_pr(callback) {
+        db_connexion.queryCallback("SELECT * FROM pull_request", callback)
     }
 
     getfulltable(tableName) {
