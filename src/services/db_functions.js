@@ -29,10 +29,10 @@ class DatabaseFunctions {
         }
     }
     
-    createPR(url, description, date_creation, date_merge, date_last_update, status, labels) {
-        let values = [url, description, date_creation, date_merge, date_last_update, status, labels];
+    createPR(prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
+        let values = [prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels];
         try {
-            db_connexion.queryValues(`INSERT INTO pull_request (url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, values);
+            db_connexion.queryValues(`INSERT INTO pull_request (id_pull_request, url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, values);
         }
         catch(err) {
             console.error(err);
