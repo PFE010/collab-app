@@ -32,7 +32,7 @@ app.use(cors());
    */
 
 module.exports = async (app, { getRouter }) => {
-  app.webhooks.onAny((event, { setHeaders }) => {
+  app.webhooks.onAny(() => {
     setHeaders({
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -50,7 +50,7 @@ module.exports = async (app, { getRouter }) => {
 
   // Add a new route
   router.get("/pullRequests", cors(), (req, res) => {
-    db_functions.fetch_all_pr((result) => res.send(result));
+    db_functions.fetchAllPr((result) => res.send(result));
   });
 
   app.on("issues.opened", async (context) => {
@@ -71,6 +71,7 @@ module.exports = async (app, { getRouter }) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
+    db_functions.createPR(pull_request.number, pull_request.url, pull_request.body, pull_request.created_at, null, pull_request.updated_at, pull_request.state, "")
     // Check if the pull request has a description
     if (pull_request.body) {
       app.log.info(`PR description: ${pull_request.body} \n`);

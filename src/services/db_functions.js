@@ -29,10 +29,12 @@ class DatabaseFunctions {
         }
     }
     
-    createPR(url, description, date_creation, date_merge, date_last_update, status, labels) {
+    createPR(id_pull_request, url, description, date_creation, date_merge, date_last_update, status, labels) {
         let values = [url, description, date_creation, date_merge, date_last_update, status, labels];
+        let queryString = (`INSERT INTO pull_request (id_pull_request, url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, values);
+        console.log("query", queryString);
         try {
-            db_connexion.queryValues(`INSERT INTO pull_request (url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, values);
+            db_connexion.queryValues(`INSERT INTO pull_request (id_pull_request, url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, values);
         }
         catch(err) {
             console.error(err);
@@ -52,6 +54,15 @@ class DatabaseFunctions {
     fetchPr(prId) {
         try {
             db_connexion.queryValuesCallback(`SELECT * FROM pull_request WHERE id_pull_request = ?`, prId, helper.printCallback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    fetchAllPr(callback) {
+        try {
+            db_connexion.queryCallback(`SELECT * FROM pull_request`, callback);
         }
         catch(err) {
             console.error(err);
