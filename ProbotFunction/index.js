@@ -5,5 +5,5 @@ const {
 const app = require("../index");
 
 module.exports = createAzureFunction(app, {
-    probot: createProbot(),
+  probot: createProbot(),
 });

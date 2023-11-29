@@ -59,6 +59,15 @@ class DatabaseFunctions {
             console.error(err);
         }
     }
+
+    fetchAllPr(callback) {
+        try {
+            db_connexion.queryCallback(`SELECT * FROM pull_request`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
     
     createUser(nom, prenom, courriel, points) {
         let values = [nom, prenom, courriel, points];

@@ -1,5 +1,5 @@
 {
-  "name": "collab-app-pfe",
+  "name": "collab-app",
   "version": "1.0.0",
   "private": true,
   "description": "pfe bot",
@@ -12,15 +12,19 @@
     "probot-app"
   ],
   "scripts": {
-    "start": "probot run ./index.js"
+    "start": "probot run ./index.js",
+    "build": "docker build -t collab-app .",
+    "test": "jest"
   },
   "dependencies": {
     "@probot/adapter-azure-functions": "^1.0.23",
-    "probot": "^12.3.3",
-    "mysql": "^2.18.1"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "mysql": "^2.18.1",
+    "probot": "^12.3.3"
   },
   "devDependencies": {
-    "@azure/functions": "4.1.0",
+    "@azure/functions": "^4.1.0",
     "@types/jest": "^29.0.0",
     "@types/mysql": "^2.15.24",
     "@types/node": "^18.18.10",

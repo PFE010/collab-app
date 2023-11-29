@@ -1,3 +1,7 @@
+const { DatabaseFunctions } = require('./src/services/db_functions')
+const express = require('express')
+const app = express()
+
  /**
    * - Créer la PR (done)
    * - Supprimer la PR (done)
@@ -25,14 +29,39 @@
 
    */
 
-const db_functions = require('./src/services/db_functions');
 const helper = require('./src/helper');
 
 const db_con = new db_functions.DatabaseFunctions();
 
-var points = 0;
+module.exports = async (app, { getRouter }) => {
 
-module.exports = async (app) => {
+  const db_functions = new DatabaseFunctions()
+
+  // Get an express router to expose new HTTP endpoints
+  const router = getRouter("/collab-app");
+
+  // Use any middleware
+  router.use(require("express").static("public"));
+
+  function addHeader(res) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    console.log(res);
+    return res;
+  };
+
+  // Add a new route
+  router.get("/pullRequests", (req, res) => {
+    db_functions.fetchAllPr((result) => addHeader(res).send(result));
+  });
+
+  app.on("issues.opened", async (context) => {
+    const issueComment = context.issue({
+      body: "Thanks for opening this issue! This is live from azure.",
+    });
+    return context.octokit.issues.createComment(issueComment);
+  });
 
   // Pull request open -- works
   app.on('pull_request.opened', async (context) => {
@@ -45,6 +74,7 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
+    db_functions.createPR(pull_request.number, pull_request.url, pull_request.body, pull_request.created_at, null, pull_request.updated_at, pull_request.state, "")
     // Check if the pull request has a description
     if (pull_request.body) {
       app.log.info(`PR description: ${pull_request.body} \n`);
