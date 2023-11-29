@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/11125d2b-8f19-45db-b99f-d7836d93b338/resourceGroups/Ressource-collab-app/providers/Microsoft.Web/sites/collab-app-pfe010",
+    "appService.deploySubpath": "."
+}
