@@ -5,8 +5,7 @@
         "type": "httpTrigger",
         "direction": "in",
         "name": "req",
-        "methods": ["post", "get"],
-        "path": "/collab-app/pullRequests"
+        "methods": ["post", "get"]
       },
       {
         "type": "http",
