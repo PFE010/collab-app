@@ -22,15 +22,15 @@ jobs:
     - name: Log in to registry
       uses: docker/login-action@v2
       with:
-        registry: https://mcr.microsoft.com/
-        username: ${{ secrets.AzureAppService_ContainerUsername_8b4c35d0a2394ebb9bf4fcdaa04040ee }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_38916ed90f664ff3b04529ff14fce7bd }}
+        registry: https://pfe010.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_722849d766fc42dcaa988ba5c8a4ca4f }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_e5de34bb9f004adca80a245edf60fd81 }}
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: mcr.microsoft.com/${{ secrets.AzureAppService_ContainerUsername_8b4c35d0a2394ebb9bf4fcdaa04040ee }}/appsvc/staticsite:${{ github.sha }}
+        tags: pfe010.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_722849d766fc42dcaa988ba5c8a4ca4f }}/collab-app:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
@@ -47,5 +47,5 @@ jobs:
       with:
         app-name: 'collab-app-pfe010'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_3a86c08a5a9d42c095df223c0127a92f }}
-        images: 'mcr.microsoft.com/${{ secrets.AzureAppService_ContainerUsername_8b4c35d0a2394ebb9bf4fcdaa04040ee }}/appsvc/staticsite:${{ github.sha }}'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_405d2b7ae0cc4e19a7ca94737e0c32c1 }}
+        images: 'pfe010.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_722849d766fc42dcaa988ba5c8a4ca4f }}/collab-app:${{ github.sha }}'
