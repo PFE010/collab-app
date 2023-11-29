@@ -53,6 +53,13 @@ module.exports = async (app, { getRouter }) => {
     db_functions.fetch_all_pr((result) => res.send(result));
   });
 
+  app.on("issues.opened", async (context) => {
+    const issueComment = context.issue({
+      body: "Thanks for opening this issue! This is live from azure.",
+    });
+    return context.octokit.issues.createComment(issueComment);
+  });
+
   // Pull request open -- works
   app.on('pull_request.opened', async (context) => {
 
