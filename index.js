@@ -1,8 +1,6 @@
 const { DatabaseFunctions } = require('./src/services/db_functions')
 const express = require('express')
-const cors = require("cors");
 const app = express()
-app.use(cors());
 
  /**
    * - Créer la PR (done)
@@ -32,13 +30,6 @@ app.use(cors());
    */
 
 module.exports = async (app, { getRouter }) => {
-  app.webhooks.onAny(() => {
-    setHeaders({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    });
-  });
 
   const db_functions = new DatabaseFunctions()
 
@@ -48,9 +39,16 @@ module.exports = async (app, { getRouter }) => {
   // Use any middleware
   router.use(require("express").static("public"));
 
+  function addHeader(res) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return res;
+  };
+
   // Add a new route
-  router.get("/pullRequests", cors(), (req, res) => {
-    db_functions.fetchAllPr((result) => res.send(result));
+  router.get("/pullRequests", (req, res) => {
+    db_functions.fetchAllPr((result) => addHeader(res).send(result));
   });
 
   app.on("issues.opened", async (context) => {
