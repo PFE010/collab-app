@@ -16,18 +16,18 @@ function endConnection() {
     });
 }
 
-function queryCallback(sql, callback) {
-    connection.query(sql, function (err, result) {
-        if (err) throw err;
-        callback(result);
-    });
-}
-
 function query(sql) {
     connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         console.log("query success");
         return;
+    });
+}
+
+function queryCallback(sql, callback) {
+    connection.query(sql, function (err, result) {
+        if (err) throw err;
+        callback(result);
     });
 }
 
@@ -38,10 +38,18 @@ function queryValues(sql, values) {
     });
 }
 
+function queryValuesCallback(sql, values, callback) {
+    connection.query(sql, values, function (err, result) {
+        if (err) throw err;
+        callback(result);
+    });
+}
+
 module.exports = {
     query,
     queryCallback,
     queryValues,
+    queryValuesCallback,
     connect,
     endConnection
 }
