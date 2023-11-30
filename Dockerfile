@@ -1,5 +1,5 @@
-FROM node:19-slim
-WORKDIR /usr/src/app
+FROM node:18-slim
+WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --production
 RUN npm cache clean --force
