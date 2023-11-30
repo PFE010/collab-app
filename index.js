@@ -26,6 +26,8 @@
    */
 
 const db_functions = require('./src/services/db_functions');
+const helper = require('./src/helper');
+
 const db_con = new db_functions.DatabaseFunctions();
 
 var points = 0;
@@ -50,9 +52,7 @@ module.exports = async (app) => {
       app.log.info("PR has no description, please add one \n");
     }
 
-    db_con.openConnection();
-    db_con.createPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, pull_request.created_at, null, null, pull_request.state, null);
-    db_con.closeConnection();
+    db_con.createPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
   });
 
   //PR closed -- works
@@ -344,5 +344,12 @@ module.exports = async (app) => {
     PR id: #${pull_request.id}, \n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Resolved by : ${sender.login}, user_id: ${sender.id}\n`);
+  });
+
+  //test hook, use [ node_modules/.bin/probot receive -e issues -p test/fixtures/issues.opened.json ./index.js ] in command line to enter
+  app.on('issues.opened', async (context) => {
+    db_con.getfulltable('pull_request');
+    db_con.getfulltable('utilisateur');
+    db_con.getfulltable('badge');
   });
 }; 
