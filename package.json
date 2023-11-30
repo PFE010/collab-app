@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "start": "probot run ./index.js",
+    "build": "docker build -t collab-app .",
     "test": "jest"
   },
   "dependencies": {
