@@ -6,7 +6,7 @@ name: Build and deploy container app to Azure Web App - collab-app-pfe010
 on:
   push:
     branches:
-      - olivier
+      - develop
   workflow_dispatch:
 
 jobs:
