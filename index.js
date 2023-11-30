@@ -25,8 +25,12 @@
 
    */
 
+const db_functions = require('./src/services/db_functions');
+const db_con = new db_functions.DatabaseFunctions();
+
+var points = 0;
+
 module.exports = async (app) => {
-  var points = 0;
 
   // Pull request open -- works
   app.on('pull_request.opened', async (context) => {
@@ -45,6 +49,10 @@ module.exports = async (app) => {
     } else {
       app.log.info("PR has no description, please add one \n");
     }
+
+    db_con.openConnection();
+    db_con.createPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, pull_request.created_at, null, null, pull_request.state, null);
+    db_con.closeConnection();
   });
 
   //PR closed -- works
@@ -66,7 +74,6 @@ module.exports = async (app) => {
     }
   });
   
-
   //PR is edited when the description is added or edited --works
   app.on('pull_request.edited', async (context) => {
     const { action,repository, pull_request} = context.payload;
@@ -156,7 +163,7 @@ module.exports = async (app) => {
   //PR assign -- works
   app.on('pull_request.assigned', async (context) => {
 
-    const { action,repository, pull_request, assignee} = context.payload;
+    const { action, repository, pull_request, assignee} = context.payload;
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
@@ -304,7 +311,8 @@ module.exports = async (app) => {
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
   });
-   //Comment on the code being edited
+
+  //Comment on the code being edited
   app.on('pull_request_review_comment.edited', async (context) => {
 
     const { action,repository, pull_request, comment, sender} = context.payload;

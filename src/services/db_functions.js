@@ -3,7 +3,9 @@ var helper = require("../helper");
 
 
 class DatabaseFunctions {
-    constructor() {
+    constructor() { }
+
+    openConnection() {
         db_connexion.connect();
     }
     
