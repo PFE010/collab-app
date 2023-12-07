@@ -57,6 +57,16 @@ class DatabaseFunctions {
         }
     }
 
+    editPRFieldWithCallback(prId, field, value, callback) {
+        try {
+            const query = `UPDATE pull_request SET ${field} = ? WHERE id_pull_request = ?`;
+            const values = [value, prId];
+            return db_connexion.queryValuesCallback(query, values, callback);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
     fetchPrAndPrint(prId) {
         try {
             return db_connexion.queryValuesCallback(`SELECT * FROM pull_request WHERE id_pull_request = ?`, prId, helper.printCallback);

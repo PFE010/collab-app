@@ -63,83 +63,38 @@ module.exports = async (app) => {
   app.on('pull_request.labeled', (context) => {
     //app.log.info(context);
     const { action, repository, pull_request, label} = context.payload;
-
+    let count;
     logEvent(context);
-
-    db_functions.fetchPrWithCallback(pull_request.number, (data) => {
-      const oldLabels_count = helper.countLabels(data[0].labels);
-
-      // Update labels first
-      db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels));
-
-      // Add 2 points per labels until 2 labels
-      if(oldLabels_count < 2) {
-        assignee = pull_request.assignee || pull_request.assignees[0];
-        if(assignee) {
-          db_functions.addPoints(2, assignee.login);
-        }
-        printPoints(assignee);
-      }
+  
+    db_functions.editPRFieldWithCallback(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels), (data) => {
+      count = helper.countLabels(data[0].labels).length || 0;
+      console.log(helper.countLabels(data[0].labels).length || 0);
     });
+
+    if(count > 0) {
+      assignee = pull_request.assignee || pull_request.assignees[0];
+      if(assignee) {
+        db_functions.addPoints(2, assignee.login);
+      }
+      printPoints(assignee);
+    }
   });
 
   //PR is being unlabeled --- works
   app.on('pull_request.unlabeled', (context) => {
     const { action, repository, pull_request, label} = context.payload;
-
-    // Check last amount of labels
-    db_functions.fetchPrWithCallback(pull_request.number, (data) => {
-
-      // Check howmany labels were removed
-      let oldLabels = helper.labelStringToList(data[0].labels);
-      const currentLabels = pull_request.labels;
-      let labelsToRemove = oldLabels.filter(label => !currentLabels.includes(label));
-      let lebelsToRemoveCount = labelsToRemove.length;
-      let updatedLabels = oldLabels;
-      
-      if(oldLabels.length - currentLabels.length > 1) {
-        for (let i = 0; i < lebelsToRemoveCount; i++) {
-          // Remove labels
-          console.log('newLabels:', currentLabels);
-          console.log('oldLabels:', updatedLabels);
-          console.log('labelsToRemove', labelsToRemove);
-
-          const labelToRemove = labelsToRemove.pop(); // Get the first removed label
-          console.log('pop', labelToRemove);
-
-          console.log('Label removed from the database:', labelToRemove);
-      
-          // Filter out the removed label and update oldLabels with the remaining labels
-          updatedLabels = updatedLabels.filter(label => label !== labelToRemove);
-          console.log("updated", updatedLabels)
-
-          console.log('Labels remaining in the database:', updatedLabels);
-
-          db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(updatedLabels));
-          // Remove points if less than 2 labels
-          if(updatedLabels.length == 1 || updatedLabels.length == 0) {
-            assignee = pull_request.assignee || pull_request.assignees[0];
-            if(assignee) {
-              console.log("loop remove points")
-              db_functions.removePoints(2, assignee.login);
-            }
-            printPoints(assignee);
-          }
-        }
-      } else {
-        // Update labels normally
-        db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels));
-        // Remove points if less than 2 labels
-        if(oldLabels.length == 1 || oldLabels.length == 0) {
-          assignee = pull_request.assignee || pull_request.assignees[0];
-          if(assignee) {
-            console.log("else remove points")
-            db_functions.removePoints(2, assignee.login);
-          }
-          printPoints(assignee);
-        }
+ 
+    // Update labels 
+    db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels));
+    // Remove points if less than 2 labels
+    if(pull_request.labels.length < 1) {
+      assignee = pull_request.assignee || pull_request.assignees[0];
+      if(assignee) {
+        console.log("else remove points")
+        db_functions.removePoints(2, assignee.login);
       }
-    });
+      printPoints(assignee);
+    }
   });
 
     //PR assign -- works

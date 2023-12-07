@@ -7,14 +7,14 @@
   }
 
   function countLabels(data) {
-    console.log("data", data);
     if (data) {
       const labelArray = data.split(',').map(label => label.trim());
-      return labelArray.length;
+      return labelArray.length === 1 ? 1 : labelArray.length;
     } else {
       return 0;
     }
-  } 
+  }
+  
 
   function fromArrayToLabelString(labels) {
     // Assuming 'labels' is an array containing pull_request.labels
