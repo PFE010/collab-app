@@ -1,11 +1,11 @@
-const { DatabaseFunctions } = require('./src/services/db_functions')
-var db_con = require("./services/db_connexion");
+const db_functions = require('./services/db_functions');
+const tester = require('./helper');
 
-db_con.connect();
+const db_con = new db_functions.DatabaseFunctions();
 
-//db_functions_1.createBadges([['testbadge1', 'desc1'], ['testbadge2', 'desc2']]);
-//db_functions_1.deleteBadge(2);
-db_functions_1.getfulltable('badge');
+//TEST HERE
+var date = '1999-08-11T04:00:00.000Z'
+console.log(tester.convertDate(date));
+db_con.getfulltable('pull_request');
 
-db_con.endConnection();
-
+//db_con.closeConnection();
