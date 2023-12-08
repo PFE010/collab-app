@@ -33,7 +33,7 @@
 
   
 function labelStringToList(labelString) {
-  return labelString.split(',');
+  return labelString.split(',').filter(label => label.trim() !== '');
 } 
 
   module.exports = {

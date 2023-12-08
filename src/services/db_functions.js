@@ -47,10 +47,10 @@ class DatabaseFunctions {
         }
     }
 
-    editPRField(prId, field, value) {
+    editPRField(prId, field, value, date) {
         try {
-            const query = `UPDATE pull_request SET ${field} = ? WHERE id_pull_request = ?`;
-            const values = [value, prId];
+            const query = `UPDATE pull_request SET ? = ?, date_last_update = ? WHERE id_pull_request = ?`;
+            const values = [field, value, date, prId];
             return db_connexion.queryValues(query, values);
         } catch (err) {
             console.error(err);

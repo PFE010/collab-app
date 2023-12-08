@@ -8,6 +8,7 @@ module.exports = async (app) => {
   const { DatabaseFunctions } = require('./services/db_functions');
   const db_functions = new DatabaseFunctions();
 
+  let lastEvent;
   // Initialize the API
   const api = await initializeApi();
 
@@ -22,7 +23,8 @@ module.exports = async (app) => {
     Assignee : ${pull_request.assignee?.login || null}, user_id: ${pull_request.assignee?.id}`);
   }
 
-  async function fetchPRDetails() {
+  async function fetchPRDetails(context) {
+    const { repository, pull_request} = context.payload;
       // Fetch pr
       try {
         // Use the API instance
@@ -61,31 +63,49 @@ module.exports = async (app) => {
   
   //PR is being labeled --- works
   app.on('pull_request.labeled', (context) => {
-    //app.log.info(context);
+    // console.log("last event", lastEvent)
+    // console.log("context", context)
+    if(lastEvent == context) return;
+    lastEvent = context;
+
     const { action, repository, pull_request, label} = context.payload;
+    console.log("label", label)
     let count;
     logEvent(context);
   
-    db_functions.editPRFieldWithCallback(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels), (data) => {
-      count = helper.countLabels(data[0].labels).length || 0;
-      console.log(helper.countLabels(data[0].labels).length || 0);
-    });
 
-    if(count > 0) {
-      assignee = pull_request.assignee || pull_request.assignees[0];
-      if(assignee) {
-        db_functions.addPoints(2, assignee.login);
+    db_functions.fetchPrWithCallback(pull_request.number, (data) => {
+      labels = helper.labelStringToList(data[0].labels);
+      count = helper.countLabels(data[0].labels);
+      count += 1;
+
+      if(labels?.length > 0) {
+        labels.push(label.name);
+        console.log("push", labels)
+      } else {
+        labels = [label.name]
+        console.log("empty", labels)
       }
-      printPoints(assignee);
-    }
+      db_functions.editPRFieldWithCallback(pull_request.number, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at), () => {} );
+      if(count == 1) {
+        assignee = pull_request.assignee || pull_request.assignees[0];
+        if(assignee) {
+          db_functions.addPoints(2, assignee.login);
+        }
+        printPoints(assignee);
+      }
+    })
   });
 
   //PR is being unlabeled --- works
   app.on('pull_request.unlabeled', (context) => {
+    if(lastEvent == context) return;
+    lastEvent = context;
+
     const { action, repository, pull_request, label} = context.payload;
  
     // Update labels 
-    db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels));
+    db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels), helper.convertDate(pull_request.updated_at));
     // Remove points if less than 2 labels
     if(pull_request.labels.length < 1) {
       assignee = pull_request.assignee || pull_request.assignees[0];
@@ -125,54 +145,38 @@ module.exports = async (app) => {
       printPoints(pull_request.user);
     });
   
+  /*
   //PR is edited when the description is added or edited --works
   app.on('pull_request.edited', async (context) => {
-    const { action, repository, pull_request} = context.payload;
-  
-    app.log.info(`Action done: ${action}\n 
-    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR url: ${pull_request.url}, PR status: ${pull_request.state}\n
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+    const { action, repository, pull_request, changes} = context.payload;
 
     // Check if the pull request has a description
     if (pull_request.body) {
       app.log.info(`PR description was added: ${pull_request.body} \n`);
     }
-
-  });
-
+    db_functions.editPRField(pull_request.number, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
+  });*/
 
   //Reopening a PR -- works
   app.on('pull_request.reopened', async (context) => {
     const { action, repository, pull_request} = context.payload;
-  
-    app.log.info(`Action done: ${action}\n 
-    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-    PR url: ${pull_request.url}, PR status: ${pull_request.state}\n
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
+    db_functions.editPRField(pull_request.number, 'status', 'open', helper.convertDate(pull_request.updated_at));
   });
 
     //PR closed -- works
     app.on('pull_request.closed', async (context) => {
-        const { action, repository, pull_request } = context.payload;
-        
-        app.log.info(`Action done: ${action}\n 
-            PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
-            PR url: ${pull_request.url}, PR status: ${pull_request.state}\n
-            Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-            PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}
-            PR merged: ${pull_request.merged}`);
-        
-        // Check if the pull request is merged
-        if (pull_request.merged) {
-            app.log.info(`PR merged by: ${pull_request.merged_by.login} \n`);
-        } else {
-            app.log.info("PR was not merged. \n");
-        }
-        });
+      const { action, repository, pull_request } = context.payload;
+
+      db_functions.editPRField(pull_request.number, 'status', 'closed', helper.convertDate(pull_request.updated_at));
+
+      // Check if the pull request is merged
+      if (pull_request.merged) {
+          app.log.info(`PR merged by: ${pull_request.merged_by.login} \n`);
+      } else {
+          app.log.info("PR was not merged. \n");
+      }
+    }); 
 
   //PR reviewer is added
   app.on('pull_request.review_requested', async (context) => {
