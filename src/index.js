@@ -43,6 +43,14 @@ module.exports = async (app) => {
     });
   } 
 
+  function addPRToBdIfNull(pull_request) {
+    db_functions.fetchPrWithCallback(pull_request.number, (data) => {
+      if(data === undefined || data.length == 0) {
+        db_functions.createPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
+      }
+    })
+  }
+
   // Pull request open -- works
   app.on('pull_request.opened', async (context) => {
 
@@ -65,14 +73,15 @@ module.exports = async (app) => {
   app.on('pull_request.labeled', (context) => {
     // console.log("last event", lastEvent)
     // console.log("context", context)
+    
     if(lastEvent == context) return;
     lastEvent = context;
 
     const { action, repository, pull_request, label} = context.payload;
-    console.log("label", label)
+    addPRToBdIfNull(pull_request);
+
     let count;
     logEvent(context);
-  
 
     db_functions.fetchPrWithCallback(pull_request.number, (data) => {
       labels = helper.labelStringToList(data[0].labels);
@@ -103,7 +112,8 @@ module.exports = async (app) => {
     lastEvent = context;
 
     const { action, repository, pull_request, label} = context.payload;
- 
+    addPRToBdIfNull(pull_request);
+  
     // Update labels 
     db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels), helper.convertDate(pull_request.updated_at));
     // Remove points if less than 2 labels
@@ -121,6 +131,7 @@ module.exports = async (app) => {
     app.on('pull_request.assigned', async (context) => {
 
       const { action, repository, pull_request, assignee} = context.payload;
+      addPRToBdIfNull(pull_request);
 
       logEvent(context);
 
@@ -137,6 +148,7 @@ module.exports = async (app) => {
     app.on('pull_request.unassigned', async (context) => {
   
       const { action, repository, pull_request, assignee} = context.payload;
+      addPRToBdIfNull(pull_request);
 
       logEvent(context);
 
@@ -145,38 +157,40 @@ module.exports = async (app) => {
       printPoints(pull_request.user);
     });
   
-  /*
+
   //PR is edited when the description is added or edited --works
   app.on('pull_request.edited', async (context) => {
     const { action, repository, pull_request, changes} = context.payload;
+    addPRToBdIfNull(pull_request);
 
     // Check if the pull request has a description
     if (pull_request.body) {
       app.log.info(`PR description was added: ${pull_request.body} \n`);
     }
     db_functions.editPRField(pull_request.number, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
-  });*/
+  });
 
   //Reopening a PR -- works
   app.on('pull_request.reopened', async (context) => {
     const { action, repository, pull_request} = context.payload;
+    addPRToBdIfNull(pull_request);
 
     db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
   });
 
-    //PR closed -- works
-    app.on('pull_request.closed', async (context) => {
-      const { action, repository, pull_request } = context.payload;
+  //PR closed -- works
+  app.on('pull_request.closed', async (context) => {
+    const { action, repository, pull_request } = context.payload;
+    addPRToBdIfNull(pull_request);
 
-      db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
+    console.log(pull_request.state)
+    db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
 
-      // Check if the pull request is merged
-      if (pull_request.merged) {
-          app.log.info(`PR merged by: ${pull_request.merged_by.login} \n`);
-      } else {
-          app.log.info("PR was not merged. \n");
-      }
-    }); 
+    // Check if the pull request is merged
+    if (pull_request.merged) {
+      db_functions.editPRField(pull_request.number, 'date_merge',  helper.convertDate(pull_request.merged_at), helper.convertDate(pull_request.updated_at));
+    }
+  }); 
 
   //PR reviewer is added
   app.on('pull_request.review_requested', async (context) => {
