@@ -13,13 +13,13 @@ module.exports = async (app) => {
   const api = await initializeApi();
 
   function logEvent(context) {
-    const { action, repository, pull_request, assignee} = context.payload;
+    const { action, repository, pull_request, sender} = context.payload;
 
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
     PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time updated: ${pull_request.updated_at}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    Assigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
+    Assigner : ${sender.login}, user_id: ${sender.id}\n
     Assignee : ${pull_request.assignee?.login || null}, user_id: ${pull_request.assignee?.id}`);
   }
 
@@ -87,9 +87,11 @@ module.exports = async (app) => {
     logEvent(context);
 
     db_functions.fetchPrWithCallback(pull_request.number, (data) => {
-      labels = helper.labelStringToList(data[0].labels);
-      count = helper.countLabels(data[0].labels);
-      count += 1;
+      if(data.length > 0){
+        labels = helper.labelStringToList(data[0].labels);
+        count = helper.countLabels(data[0].labels);
+        count += 1;
+      }
 
       if(labels?.length > 0) {
         labels.push(label.name);
@@ -121,12 +123,19 @@ module.exports = async (app) => {
     db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(pull_request.labels), helper.convertDate(pull_request.updated_at));
     // Remove points if less than 2 labels
     if(pull_request.labels.length < 1) {
-      assignee = pull_request.assignee || pull_request.assignees[0];
+      if(pull_request.assignee){
+        assignee = pull_request.assignee || pull_request.assignees[0];
       if(assignee) {
         console.log("else remove points")
-        db_functions.removePoints(2, assignee.login);
+        db_functions.removePoints(2, pull_request.assignee.login);
+      }else{
+        console.log(`no assignees for PR: ${pull_request.number}`);
+
       }
       printPoints(assignee);
+
+      }
+      
     }
   });
 
