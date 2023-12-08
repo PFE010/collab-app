@@ -39,7 +39,10 @@ module.exports = async (app) => {
   function printPoints(assignee) {
     db_functions.fetchUserWithCallback(assignee.login, (data) => {
       console.log("----------");
-      console.log("User: " + data[0].nom + " now has: " + data[0].points + " points.");
+      if(data.length > 0){
+        console.log("User: " + data[0].nom + " now has: " + data[0].points + " points.");
+   }
+      
     });
   } 
 
