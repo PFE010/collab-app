@@ -10,14 +10,10 @@ function endConnection() {
 }
 
 function query(sql) {
-    pool.getConnection(function (err, connection) {
+    connection.query(sql, function (err, result, fields) {
         if (err) throw err;
-        connection.query(sql, function (err, result) {
-            connection.release();
-            if (err) throw err;
-
-            console.log("query success");
-        });
+        console.log("query success");
+        return;
     });
 }
 
