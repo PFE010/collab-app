@@ -13,10 +13,5 @@ var labels = 'label1, label2'
 
 const db_functions = new DatabaseFunctions()
 
-// console.log(db_functions.seeTables())
-// console.log(db_functions.create_pr(number, url, description, titre, date_creation, date_merge, date_last_update, status, labels))
-// console.log(db_functions.edit_pr(number, url, description, titre, date_creation, date_merge, date_last_update, status, labels))
-// console.log(db_functions.fetch_pr(51));
-console.log(db_functions.fetch_all_pr())
 
-db_functions.closeConnection()
+db_functions.getfulltable("pull_request");

@@ -1,48 +1,60 @@
 var mysql = require("mysql");
 var config = require("../../config");
 
-const connection = mysql.createConnection(config.db);
-
-function connect() {
-    connection.connect(function(err) {
-        if (err) throw err;
-        console.log("Connected!");
-    });
-}
+var pool = mysql.createPool(config.db);
 
 function endConnection() {
-    connection.end(function(err) {
+    pool.end(function(err) {
         // The connection is terminated now
     });
 }
 
 function query(sql) {
-    connection.query(sql, function (err, result, fields) {
+    pool.getConnection(function (err, connection) {
         if (err) throw err;
-        console.log("query success");
-        return;
+        connection.query(sql, function (err, result) {
+            connection.release();
+            if (err) throw err;
+
+            console.log("query success");
+        });
     });
 }
 
 function queryCallback(sql, callback) {
-    connection.query(sql, function (err, result) {
+    pool.getConnection(function (err, connection) {
         if (err) throw err;
-        callback(result);
+        connection.query(sql, function (err, result) {
+            connection.release();
+            if (err) throw err;
+
+            callback(result);
+        });
     });
 }
 
 function queryValues(sql, values) {
-    connection.query(sql, values, function (err, result) {
+    pool.getConnection(function (err, connection) {
         if (err) throw err;
-        console.log("Number of records inserted: " + result.affectedRows);
-    });
+        connection.query(sql, values, function (err, result) {
+            connection.release();
+            if (err) throw err;
+
+            console.log("Number of records inserted: " + result.affectedRows);
+        });
+    }); 
 }
 
 function queryValuesCallback(sql, values, callback) {
-    connection.query(sql, values, function (err, result) {
+    pool.getConnection(function (err, connection) {
         if (err) throw err;
-        callback(result);
-    });
+        connection.query(sql, values, function (err, result) {
+            connection.release();
+            if (err) throw err;
+
+            callback(result);
+        });
+    }); 
 }
 
 module.exports = {
@@ -50,6 +62,5 @@ module.exports = {
     queryCallback,
     queryValues,
     queryValuesCallback,
-    connect,
     endConnection
 }
