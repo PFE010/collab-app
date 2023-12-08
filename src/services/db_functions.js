@@ -49,9 +49,9 @@ class DatabaseFunctions {
 
     editPRField(prId, field, value, date) {
         try {
-            const query = `UPDATE pull_request SET ? = ?, date_last_update = ? WHERE id_pull_request = ?`;
-            const values = [field, value, date, prId];
-            return db_connexion.queryValues(query, values);
+            const query = `UPDATE pull_request SET ${field} = '${value}', date_last_update = '${date}' WHERE id_pull_request = ${prId}`;
+            console.log("query", query)
+            return db_connexion.query(query);
         } catch (err) {
             console.error(err);
         }

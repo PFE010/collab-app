@@ -161,14 +161,14 @@ module.exports = async (app) => {
   app.on('pull_request.reopened', async (context) => {
     const { action, repository, pull_request} = context.payload;
 
-    db_functions.editPRField(pull_request.number, 'status', 'open', helper.convertDate(pull_request.updated_at));
+    db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
   });
 
     //PR closed -- works
     app.on('pull_request.closed', async (context) => {
       const { action, repository, pull_request } = context.payload;
 
-      db_functions.editPRField(pull_request.number, 'status', 'closed', helper.convertDate(pull_request.updated_at));
+      db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
 
       // Check if the pull request is merged
       if (pull_request.merged) {
