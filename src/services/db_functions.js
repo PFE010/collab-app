@@ -102,10 +102,10 @@ class DatabaseFunctions {
         }
     }
 
-    createUser(nom, prenom, courriel, points) {
-        let values = [nom, prenom, courriel, points];
+    createUser(id_utilisateur, nom, prenom, courriel, points) {
+        let values = [id_utilisateur,nom, prenom, courriel, points];
         try {
-            db_connexion.queryValues(`INSERT INTO utilisateur (nom, prenom, courriel, points) VALUES (?, ?, ?, ?)`, values);
+            db_connexion.queryValues(`INSERT INTO utilisateur (id_utilisateur, nom, prenom, courriel, points) VALUES (?, ?, ?, ?, ?)`, values);
         }
         catch(err) {
             console.error(err);

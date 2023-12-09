@@ -155,7 +155,11 @@ module.exports = async (app) => {
           console.log(`User ${sender.login} exists in the database.`);
       } else {
           console.log(`User ${sender.login} does not exist in the database.`);
+          db_functions.createUser(sender.id, sender.login, "none", "cant access", 0)
       }
+
+      db_functions.addPoints(2, sender.login);
+      printPoints(pull_request.user);
 
       // // Create assigned user if needed
       // user = pull_request.assignee || pull_request.assignees[0];
