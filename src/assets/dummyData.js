@@ -17,11 +17,11 @@ const palierData = [
   ];
   
   const badgesData = [
-    { id_badge: 5, titre: 'Labeller', description: 'Ajout de labels' },
-    { id_badge: 6, titre: 'Commenter', description: 'Ajout de commentaire' },
-    { id_badge: 7, titre: 'Committed', description: 'Commit sur une PR' },
-    { id_badge: 8, titre: 'PR specialist', description: 'Merge de PR' },
-    { id_badge: 9, titre: 'Reactor', description: 'réaction à des commentaires' }
+    { titre: 'Labeller', description: 'Ajout de labels', action: 'label' },
+    { titre: 'Commenter', description: 'Ajout de commentaire', action: 'comment' },
+    { titre: 'Committed', description: 'Commit sur une PR', action: 'commit' },
+    { titre: 'PR specialist', description: 'Merge de PR', action: 'merge' },
+    { titre: 'Reactor', description: 'réaction à des commentaires', action: 'react' }
   ];
 
 module.exports = {

@@ -9,11 +9,19 @@ module.exports = async (app) => {
   const dummyData = require('./assets/dummyData');
 
    // for testing only
-  function initPaliersAndBadges() {
+  function initPaliers() {
     dummyData.palierData.forEach(item => {
       const { points_attrib, titre_palier, nb_action_requise, image } = item;
       db_functions.createPaliers(points_attrib, titre_palier, nb_action_requise, image)
     })
+  }
+
+  // for testing only
+  function initBadges() {
+    dummyData.badgesData.forEach(badge => {
+      const { titre, description, action } = badge;
+      db_functions.createBadges(titre, description, action)
+    });
   }
 
   // for testing only
@@ -22,10 +30,12 @@ module.exports = async (app) => {
       data.forEach(user => {
         const id_user = user.id_utilisateur;
 
-        dummyData.badgesData.forEach(badge => {
-          const { id_badge } = badge;
-          db_functions.addUserBadge(id_user, id_badge, 0, 1);
-        });
+        db_functions.getfulltableWithCallback('badge', (badges) => {
+          badges.forEach(badge => {
+            const { id_badge } = badge;
+            db_functions.addUserBadge(id_user, id_badge, 0, 1);
+          });
+        })
       })
     })
   }
@@ -46,20 +56,20 @@ module.exports = async (app) => {
     })
   } 
 
+
+
   // Initialize the API
   const api = await initializeApi();
 
-  // DONE initPaliersAndBadges();
+  initBadges();
 
-  // DONE initUserBadges();
+  initPaliers();
 
-  // DONE initBadgePalier();
+  initUserBadges();
 
-  function testshit() {
-    db_functions.updateProgression(0, 5, 10);
-    db_functions.updateProgression(0, 5, -1);
-  }
-  testshit();
+  initBadgePalier();
+
+
   function logEvent(context) {
     const { action, repository, pull_request, assignee} = context.payload;
 

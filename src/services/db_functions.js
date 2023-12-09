@@ -208,15 +208,15 @@ class DatabaseFunctions {
         }
     }
     
-    createBadges(values) {
+    createBadges(titre, description, action) {
         try {
-            db_connexion.queryValues(`INSERT INTO badge (titre, description) VALUES ?`, [values]);
+            db_connexion.query(`INSERT INTO badge (titre, description, action) VALUES ('${titre}', '${description}', '${action}')`);
         }
         catch(err) {
             console.error(err);
         }
     }
-    
+
     deleteBadge(badgeId) {
         try {
             db_connexion.queryValues(`DELETE FROM badge WHERE id_badge = ?`, badgeId);
@@ -230,6 +230,15 @@ class DatabaseFunctions {
         try {
             db_connexion.queryValues(`INSERT INTO palier (points_attrib, titre_palier, nb_action_requise, image) 
             VALUES (${points_attrib}, '${titre_palier}', ${nb_action_requise}, '${image}');`);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    deletePalier(palierId) {
+        try {
+            db_connexion.queryValues(`DELETE FROM palier WHERE id_palier = ?`, palierId);
         }
         catch(err) {
             console.error(err);
@@ -250,15 +259,6 @@ class DatabaseFunctions {
         try {
             db_connexion.queryValues(`INSERT INTO utilisateur_badge (id_utilisateur, id_badge, progression, numero_palier) 
             VALUES ('${id_user}', '${id_badge}', '${progression}', '${palier}')`);
-        }
-        catch(err) {
-            console.error(err);
-        }
-    }
-    
-    deletePalier(palierId) {
-        try {
-            db_connexion.queryValues(`DELETE FROM palier WHERE id_palier = ?`, palierId);
         }
         catch(err) {
             console.error(err);
