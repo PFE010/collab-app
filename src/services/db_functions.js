@@ -112,20 +112,20 @@ class DatabaseFunctions {
         }
     }
 
-    createUserIfNull(nom, prenom, courriel, points) {
-        let values = [nom, prenom, courriel, points];
+    createUserIfNull(id_utilisateur, nom, prenom, courriel, points) {
+        let values = [id_utilisateur, nom, prenom, courriel, points];
         try {
             db_connexion.queryValues(`
-                INSERT IGNORE INTO utilisateur (nom, prenom, courriel, points) VALUES (?, ?, ?, ?)`, values);
+                INSERT IGNORE INTO utilisateur (id_utilisateur, nom, prenom, courriel, points) VALUES (?, ?, ?, ?, ?)`, values);
         } catch (err) {
             console.error(err);
         }
     }
 
-    doesUserExist(username) {
+    doesUserExist(login) {
         try {
             const query = "SELECT COUNT(*) as count FROM utilisateur WHERE nom = ?";
-            const result = db_connexion.queryValues(query, [username]);
+            const result = db_connexion.queryValues(query, [login]);
     
             // Check if the result is defined and not empty
             if (result && result.length > 0) {
@@ -142,8 +142,6 @@ class DatabaseFunctions {
             return false; // Return false in case of an error
         }
     }
-    
-    
     
     
     deleteUser(userId) {

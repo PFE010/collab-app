@@ -152,22 +152,14 @@ module.exports = async (app) => {
       const userExists = db_functions.doesUserExist(sender.login);
 
       if (userExists) {
-          console.log(`User ${sender.login} exists in the database.`);
+          console.log(`User ${assignee.login} exists in the database.`);
       } else {
-          console.log(`User ${sender.login} does not exist in the database.`);
-          db_functions.createUser(sender.id, sender.login, "none", "cant access", 0)
+          console.log(`User ${assignee.login} does not exist in the database.`);
+          db_functions.createUserIfNull(assignee.id, assignee.login, "none", "cant access", 0)
       }
 
-      db_functions.addPoints(2, sender.login);
-      printPoints(pull_request.user);
-
-      // // Create assigned user if needed
-      // user = pull_request.assignee || pull_request.assignees[0];
-      // db_functions.createUserIfNull(user.login, "none", "cant access", 0);
-
-      // // Add 2 points to person who created the PR
-      // db_functions.addPoints(2, pull_request.user.login);
-      // printPoints(pull_request.user);
+      db_functions.addPoints(2, assignee.login);
+      printPoints(assignee);
     });
   
     //PR unassign -- works
