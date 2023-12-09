@@ -121,6 +121,29 @@ class DatabaseFunctions {
             console.error(err);
         }
     }
+
+    doesUserExist(username) {
+        try {
+            const query = "SELECT COUNT(*) as count FROM utilisateur WHERE nom = ?";
+            const result = db_connexion.queryValues(query, [username]);
+    
+            // Check if the result is defined and not empty
+            if (result && result.length > 0) {
+                const userCount = result[0].count;
+    
+                // If the count is greater than 0, the user exists
+                return userCount > 0;
+            } else {
+                // If result is undefined or empty, the user does not exist
+                return false;
+            }
+        } catch (error) {
+            console.error("Error checking user existence:", error);
+            return false; // Return false in case of an error
+        }
+    }
+    
+    
     
     
     deleteUser(userId) {
@@ -226,7 +249,7 @@ class DatabaseFunctions {
         }
     }
 
-    async addPoints(numPoints, login) {
+    addPoints(numPoints, login) {
         let values = [numPoints, login];
         try{
             return db_connexion.queryValues(`UPDATE utilisateur SET points = points + ? WHERE nom = ?`, values);

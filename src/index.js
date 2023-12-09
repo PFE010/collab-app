@@ -102,11 +102,13 @@ module.exports = async (app) => {
       }
       db_functions.editPRFieldWithCallback(pull_request.number, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at), () => {} );
       if(count == 1) {
+        if(pull_request.assignee){
         assignee = pull_request.assignee || pull_request.assignees[0];
         if(assignee) {
           db_functions.addPoints(2, assignee.login);
         }
         printPoints(assignee);
+        }
       }
     })
   });
@@ -142,18 +144,26 @@ module.exports = async (app) => {
     //PR assign -- works
     app.on('pull_request.assigned', async (context) => {
 
-      const { action, repository, pull_request, assignee} = context.payload;
+      const { action, repository, pull_request, assignee, sender} = context.payload;
       addPRToBdIfNull(pull_request);
 
       logEvent(context);
 
-      // Create assigned user if needed
-      user = pull_request.assignee || pull_request.assignees[0];
-      db_functions.createUserIfNull(user.login, "none", "cant access", 0);
+      const userExists = db_functions.doesUserExist(sender.login);
 
-      // Add 2 points to person who created the PR
-      db_functions.addPoints(2, pull_request.user.login);
-      printPoints(pull_request.user);
+      if (userExists) {
+          console.log(`User ${sender.login} exists in the database.`);
+      } else {
+          console.log(`User ${sender.login} does not exist in the database.`);
+      }
+
+      // // Create assigned user if needed
+      // user = pull_request.assignee || pull_request.assignees[0];
+      // db_functions.createUserIfNull(user.login, "none", "cant access", 0);
+
+      // // Add 2 points to person who created the PR
+      // db_functions.addPoints(2, pull_request.user.login);
+      // printPoints(pull_request.user);
     });
   
     //PR unassign -- works
@@ -292,17 +302,8 @@ module.exports = async (app) => {
 
   });
 
-  app.on('issue_comment.reaction.created', async context => {
-    // Do something when a reaction is added to a comment
-    app.log.info(`Action done: ${action}`);
-  });
 
   // Pull request review
-
-  //Not needed for now
-  app.on('pull_request_review.dismissed', async (context) => {
-
-  });
 
   // Existing comment on a PR is edited
   app.on('pull_request_review.edited', async (context) => {
@@ -348,11 +349,20 @@ module.exports = async (app) => {
   //Commenting directly on the code,then finishing review
   app.on('pull_request_review_comment.created', async (context) => {
     const { action, repository, pull_request, comment} = context.payload;
+   
+    addPRToBdIfNull(pull_request);
   
     app.log.info(`Action done: ${action}\n 
     PR id: #${pull_request.id}, Comment id: ${comment.id}, Commit id: ${comment.commit_id}, PR request id:${comment.pull_request_review_id}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
+
+    // Create user who commented if needed
+    db_functions.createUserIfNull(comment.user.login, "none", "cant access", 0);
+
+    //add points to the user and print points
+    db_functions.addPoints(2, comment.user.login);
+    printPoints(comment.user);
 
   });
 
