@@ -17,6 +17,15 @@ class DatabaseFunctions {
             console.error(err);
         }
     }
+
+    getfulltableWithCallback(tableName, callback) {
+        try {
+            db_connexion.queryCallback("SELECT * FROM ".concat(tableName), callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
     
     seeTables() {
         try {
@@ -27,7 +36,7 @@ class DatabaseFunctions {
         }
     }
     
-    createPR(prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
+    addPR(prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
         let values = [prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels];
         try {
             db_connexion.queryValues(`INSERT INTO pull_request (id_pull_request, url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, values);
@@ -67,6 +76,26 @@ class DatabaseFunctions {
         }
     }
 
+    editPRFieldWithPromise(prId, field, value) {
+        return new Promise((resolve, reject) => {
+          try {
+            const query = `UPDATE pull_request SET ${field} = ? WHERE id_pull_request = ?`;
+            const values = [value, prId];
+            
+            db_connexion.queryValuesPromise(query, values)
+              .then(result => {
+                resolve(result); // Resolve the Promise with the query result
+              })
+              .catch(error => {
+                reject(error); // Reject the Promise with the error
+              });
+          } catch (err) {
+            console.error(err);
+            reject(err); // Reject the Promise if an exception occurs
+          }
+        });
+    }
+
     fetchPrAndPrint(prId) {
         try {
             return db_connexion.queryValuesCallback(`SELECT * FROM pull_request WHERE id_pull_request = ?`, prId, helper.printCallback);
@@ -84,6 +113,24 @@ class DatabaseFunctions {
             console.error(err);
         }
     }
+
+    fetchPrWithPromise(prId) {
+        return new Promise((resolve, reject) => {
+          try {
+            db_connexion.queryValuesPromise(`SELECT * FROM pull_request WHERE id_pull_request = ?`, prId)
+              .then(result => {
+                resolve(result); // Resolve the Promise with the query result
+              })
+              .catch(error => {
+                reject(error); // Reject the Promise if there's an error executing the query
+              });
+          } catch (err) {
+            console.error(err);
+            reject(err); // Reject the Promise if an exception occurs
+          }
+        });
+    }
+    
     fetchAllPr(callback) {
         try {
             db_connexion.queryCallback(`SELECT * FROM pull_request`, callback);
@@ -102,7 +149,7 @@ class DatabaseFunctions {
         }
     }
 
-    createUser(nom, prenom, courriel, points) {
+    addUser(nom, prenom, courriel, points) {
         let values = [nom, prenom, courriel, points];
         try {
             db_connexion.queryValues(`INSERT INTO utilisateur (nom, prenom, courriel, points) VALUES (?, ?, ?, ?)`, values);
@@ -112,7 +159,7 @@ class DatabaseFunctions {
         }
     }
 
-    createUserIfNull(nom, prenom, courriel, points) {
+    addUserIfNull(nom, prenom, courriel, points) {
         let values = [nom, prenom, courriel, points];
         try {
             db_connexion.queryValues(`
@@ -179,9 +226,30 @@ class DatabaseFunctions {
         }
     }
     
-    createPaliers(values) {
+    createPaliers(points_attrib, titre_palier, nb_action_requise, image) {
         try {
-            db_connexion.queryValues(`INSERT INTO palier (points_attrib, titre_palier, nb_action_requise, image) VALUES ?`, [values]);
+            db_connexion.queryValues(`INSERT INTO palier (points_attrib, titre_palier, nb_action_requise, image) 
+            VALUES (${points_attrib}, '${titre_palier}', ${nb_action_requise}, '${image}');`);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    getPalierWithCallback(titre, callback) {
+        try {
+            console.log("titre", titre)
+            db_connexion.queryCallback(`SELECT * FROM palier WHERE titre_palier = '${titre}'`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    addUserBadge(id_user, id_badge, progression, palier) {
+        try {
+            db_connexion.queryValues(`INSERT INTO utilisateur_badge (id_utilisateur, id_badge, progression, numero_palier) 
+            VALUES ('${id_user}', '${id_badge}', '${progression}', '${palier}')`);
         }
         catch(err) {
             console.error(err);
@@ -197,9 +265,9 @@ class DatabaseFunctions {
         }
     }
 
-    addBadgePaliers(values) {
+    addBadgePaliers(id_badge, id_palier) {
         try{
-            db_connexion.queryValues(`INSERT INTO badge_palier (id_badge, id_palier) VALUES ?`, [values]);
+            db_connexion.queryValues(`INSERT INTO badge_palier (id_badge, id_palier) VALUES ('${id_badge}', '${id_palier}')`);
         }
         catch(err) {
             console.error(err);
@@ -216,17 +284,7 @@ class DatabaseFunctions {
         }
     }
 
-    addUserBadge(userId, badgeId, progression, numero_palier) {
-        let values = [userId, badgeId, progression, numero_palier];
-        try{
-            db_connexion.queryValues(`INSERT INTO utilisateur_badge (id_utilisateur, id_badge, progression, numero_palier) VALUES (?)`, [values]);
-        }
-        catch(err) {
-            console.error(err);
-        }
-    }
-
-    async addPoints(numPoints, login) {
+    addPoints(numPoints, login) {
         let values = [numPoints, login];
         try{
             return db_connexion.queryValues(`UPDATE utilisateur SET points = points + ? WHERE nom = ?`, values);
@@ -246,7 +304,7 @@ class DatabaseFunctions {
         }
     }
 
-    async removePoints(numPoints, login) {
+    removePoints(numPoints, login) {
         let values = [numPoints, login];
         try{
             return db_connexion.queryValues(`UPDATE utilisateur SET points = points - ? WHERE nom = ?`, values);
@@ -260,6 +318,15 @@ class DatabaseFunctions {
         let values = [numPoints, login];
         try{
             db_connexion.queryValuesCallback(`UPDATE utilisateur SET points = points - ? WHERE nom = ?`, values, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+    
+    updateProgression(id_utilisateur, id_badge, increment) {
+        try{
+            return db_connexion.query(`UPDATE utilisateur_badge SET progression = progression + ${increment} WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`);
         }
         catch(err) {
             console.error(err);
