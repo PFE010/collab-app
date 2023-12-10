@@ -210,7 +210,7 @@ class DatabaseFunctions {
     
     fetchBadge(action){
         try {
-            db_connexion.query(`SELECT * FROM badge WHERE action = '${badge}'`);
+            db_connexion.query(`SELECT * FROM badge WHERE action = '${action}'`);
         }
         catch(err) {
             console.error(err);
