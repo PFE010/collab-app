@@ -86,7 +86,7 @@ module.exports = async (app) => {
       // Fetch pr
       try {
         // Use the API instance
-        const response = await api.fetchPRDetails(repository.owner.login, repository.name, pull_request.number); 
+        const response = await api.fetchPRDetails(repository.owner.login, repository.name, pull_request.id); 
         return response;       
       } catch (error) {
           console.error('Error:', error);
@@ -101,9 +101,9 @@ module.exports = async (app) => {
   } 
 
   function addPRToBdIfNull(pull_request) {
-    db_functions.fetchPrWithCallback(pull_request.number, (data) => {
+    db_functions.fetchPrWithCallback(pull_request.id, (data) => {
       if(data === undefined || data.length == 0) {
-        db_functions.addPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
+        db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
       }
     })
   }
@@ -122,7 +122,7 @@ module.exports = async (app) => {
       app.log.info("PR has no description, please add one \n");
     }
 
-    db_functions.addPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
+    db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
     db_functions.addPoints(2, pull_request.user.id);
     printPoints(assignee);
   });
@@ -135,7 +135,7 @@ module.exports = async (app) => {
     let count;
     logEvent(context);
 
-    db_functions.fetchPrWithPromise(pull_request.number).then(data => {
+    db_functions.fetchPrWithPromise(pull_request.id).then(data => {
       labels = helper.labelStringToList(data[0].labels);
       count = helper.countLabels(data[0].labels);
       count += 1;
@@ -147,7 +147,7 @@ module.exports = async (app) => {
         labels = [label.name]
         console.log("empty", labels)
       }
-      db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at));
+      db_functions.editPRField(pull_request.id, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at));
 
       if(count == 1) {
         console.log("count", count)
@@ -171,7 +171,7 @@ module.exports = async (app) => {
     addPRToBdIfNull(pull_request);
   
 
-    db_functions.fetchPrWithPromise(pull_request.number).then(data => {
+    db_functions.fetchPrWithPromise(pull_request.id).then(data => {
       labels = helper.labelStringToList(data[0].labels);
       count = helper.countLabels(data[0].labels);
       count -= 1;
@@ -182,7 +182,7 @@ module.exports = async (app) => {
         labels.filter(item => item !== label.name);
         console.log("remove", labels)
       }
-      db_functions.editPRField(pull_request.number, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at)); 
+      db_functions.editPRField(pull_request.id, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at)); 
       if(count == 0) {
         assignee = pull_request.assignee || pull_request.assignees[0];
         if(assignee) {
@@ -204,7 +204,7 @@ module.exports = async (app) => {
 
     // Create assigned user if needed
     user = pull_request.assignee || pull_request.assignees[0];
-    db_functions.addUserIfNull(user.login, "none", "cant access", 0);
+    db_functions.addUserIfNull(user.id, user.login, 0);
     db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
 
     
@@ -236,7 +236,7 @@ module.exports = async (app) => {
     if (pull_request.body) {
       app.log.info(`PR description was added: ${pull_request.body} \n`);
     }
-    db_functions.editPRField(pull_request.number, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
+    db_functions.editPRField(pull_request.id, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
   });
 
   //Reopening a PR -- works
@@ -244,7 +244,7 @@ module.exports = async (app) => {
     const { action, repository, pull_request} = context.payload;
     addPRToBdIfNull(pull_request);
 
-    db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
+    db_functions.editPRField(pull_request.id, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
   });
 
   //PR closed -- works
@@ -253,11 +253,11 @@ module.exports = async (app) => {
     addPRToBdIfNull(pull_request);
 
     console.log(pull_request.state)
-    db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
+    db_functions.editPRField(pull_request.id, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
 
     // Check if the pull request is merged
     if (pull_request.merged) {
-      db_functions.editPRField(pull_request.number, 'date_merge',  helper.convertDate(pull_request.merged_at), helper.convertDate(pull_request.updated_at));
+      db_functions.editPRField(pull_request.id, 'date_merge',  helper.convertDate(pull_request.merged_at), helper.convertDate(pull_request.updated_at));
     }
   }); 
 
@@ -435,9 +435,8 @@ module.exports = async (app) => {
       if(comment.user.login) {
         db_functions.fetchPullRequestUserWithCallback(pull_request.id, comment.user.id, (data) => {
           if(data[0].role = 'r'){
-
-          } else if (data[0].role = 'a'){
-            
+            const reactor_increment = comment.reactions['+1'] + comment.reactions['-1'];
+            console.log('points', reactor_increment);
           }
         })
       }

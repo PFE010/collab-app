@@ -149,21 +149,20 @@ class DatabaseFunctions {
         }
     }
 
-    addUser(nom, prenom, courriel, points) {
-        let values = [nom, prenom, courriel, points];
+    addUser(id_utilisateur, username, points) {
+        let values = [id_utilisateur, username, points];
         try {
-            db_connexion.queryValues(`INSERT INTO utilisateur (nom, prenom, courriel, points) VALUES (?, ?, ?, ?)`, values);
+            db_connexion.queryValues(`INSERT INTO utilisateur (id_utilisateur, username points) VALUES (?, ?, ?)`, values);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    addUserIfNull(nom, prenom, courriel, points) {
-        let values = [nom, prenom, courriel, points];
+    addUserIfNull(id_utilisateur, username, points) {
         try {
             db_connexion.queryValues(`
-                INSERT IGNORE INTO utilisateur (nom, prenom, courriel, points) VALUES (?, ?, ?, ?)`, values);
+                INSERT IGNORE INTO utilisateur (id_utilisateur, username, points) VALUES ('${id_utilisateur}', '${username}', '${points}')`);
         } catch (err) {
             console.error(err);
         }
@@ -179,29 +178,18 @@ class DatabaseFunctions {
         }
     }
     
-    //update user with values [nom, prenom, courriel, id_utilisateur]
-    updateUser(newNom, newPrenom, newCourriel, userId) {
-        let values = [newNom, newPrenom, newCourriel, userId];
+    fetchUser(username) {
         try {
-            db_connexion.queryValues(`UPDATE utilisateur SET nom = ?, prenom = ?, courriel = ? WHERE id_utilisateur = ?`, values);
-        }
-        catch(err) {
-            console.error(err);
-        }
-    }
-    
-    fetchUser(login) {
-        try {
-            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur WHERE nom = ?`, login, helper.printCallback);
+            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur WHERE username = ?`, username, helper.printCallback);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    fetchUserWithCallback(login, callback) {
+    fetchUserWithCallback(username, callback) {
         try {
-            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur WHERE nom = ?`, login, callback);
+            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur WHERE username = ?`, username, callback);
         }
         catch(err) {
             console.error(err);
@@ -284,9 +272,9 @@ class DatabaseFunctions {
     }
 
     addPullRequestUser(userId, prId, role) {
-        let values = [userId, prId, role];
+        console.log("values", userId, prId, role)
         try{
-            db_connexion.queryValues(`INSERT INTO utilisateur_pr (id_utilisateur, id_pull_request, role) VALUES (?)`, [values]);
+            db_connexion.queryValues(`INSERT INTO utilisateur_pr (id_utilisateur, id_pull_request, role) VALUES ('${userId}', '${prId}', '${role}')`);
         }
         catch(err) {
             console.error(err);
@@ -302,40 +290,40 @@ class DatabaseFunctions {
         }
     }
 
-    addPoints(numPoints, login) {
-        let values = [numPoints, login];
+    addPoints(numPoints, username) {
+        let values = [numPoints, username];
         try{
-            return db_connexion.queryValues(`UPDATE utilisateur SET points = points + ? WHERE nom = ?`, values);
+            return db_connexion.queryValues(`UPDATE utilisateur SET points = points + ? WHERE username = ?`, values);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    addPointsWithCallback(numPoints, login, callback) {
-        let values = [numPoints, login];
+    addPointsWithCallback(numPoints, username, callback) {
+        let values = [numPoints, username];
         try{
-            db_connexion.queryValuesCallback(`UPDATE utilisateur SET points = points + ? WHERE nom = ?`, values, callback);
+            db_connexion.queryValuesCallback(`UPDATE utilisateur SET points = points + ? WHERE username = ?`, values, callback);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    removePoints(numPoints, login) {
-        let values = [numPoints, login];
+    removePoints(numPoints, username) {
+        let values = [numPoints, username];
         try{
-            return db_connexion.queryValues(`UPDATE utilisateur SET points = points - ? WHERE nom = ?`, values);
+            return db_connexion.queryValues(`UPDATE utilisateur SET points = points - ? WHERE username = ?`, values);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    removePointsWithCallback(numPoints, login, callback) {
-        let values = [numPoints, login];
+    removePointsWithCallback(numPoints, username, callback) {
+        let values = [numPoints, username];
         try{
-            db_connexion.queryValuesCallback(`UPDATE utilisateur SET points = points - ? WHERE nom = ?`, values, callback);
+            db_connexion.queryValuesCallback(`UPDATE utilisateur SET points = points - ? WHERE username = ?`, values, callback);
         }
         catch(err) {
             console.error(err);
