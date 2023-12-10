@@ -7,8 +7,7 @@ const config = {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: "defaultdb",
-      port: "28279",
-      connectionLimit: 1
+      port: "28279"
     }
   };
 

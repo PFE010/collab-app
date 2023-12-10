@@ -33,10 +33,6 @@
 
   
 function labelStringToList(labelString) {
-  if (labelString.trim() === '') {
-    return []; 
-  }
-
   return labelString.split(',').filter(label => label.trim() !== '');
 } 
 
