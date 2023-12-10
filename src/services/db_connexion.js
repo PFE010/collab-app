@@ -57,10 +57,34 @@ function queryValuesCallback(sql, values, callback) {
     }); 
 }
 
+function queryValuesPromise(sql, values) {
+    return new Promise((resolve, reject) => {
+      pool.getConnection((err, connection) => {
+        if (err) {
+          reject(err); // Reject the Promise if there's an error getting the connection
+          return;
+        }
+  
+        connection.query(sql, values, (err, result) => {
+          connection.release();
+  
+          if (err) {
+            reject(err); // Reject the Promise if there's an error executing the query
+            return;
+          }
+  
+          console.log("Number of records inserted: " + result.affectedRows);
+          resolve(result); // Resolve the Promise with the query result
+        });
+      });
+    });
+}
+
 module.exports = {
     query,
     queryCallback,
     queryValues,
     queryValuesCallback,
-    endConnection
+    endConnection,
+    queryValuesPromise
 }
