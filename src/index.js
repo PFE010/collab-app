@@ -12,7 +12,15 @@ module.exports = async (app) => {
   // Initialize the API
   const api = await initializeApi();
 
-  //logging events for the most PR cases
+  // initBadges();
+
+  // initPaliers();
+
+  // initUserBadges();
+
+  // initBadgePalier();
+
+
   function logEvent(context) {
     const { action, repository, pull_request, sender} = context.payload;
 
