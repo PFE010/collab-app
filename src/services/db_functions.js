@@ -293,6 +293,15 @@ class DatabaseFunctions {
         }
     }
 
+    fetchPullRequestUserWithCallback(id_pull_request, id_utilisateur, callback){
+        try{
+            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur_pr WHERE id_utilisateur = '${id_utilisateur}' AND id_pull_request = '${id_pull_request}`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
     addPoints(numPoints, login) {
         let values = [numPoints, login];
         try{

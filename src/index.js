@@ -205,7 +205,9 @@ module.exports = async (app) => {
     // Create assigned user if needed
     user = pull_request.assignee || pull_request.assignees[0];
     db_functions.addUserIfNull(user.login, "none", "cant access", 0);
+    db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
 
+    
     // Add 2 points to person who created the PR
     db_functions.addPoints(2, pull_request.user.login);
     printPoints(pull_request.user);
@@ -262,13 +264,9 @@ module.exports = async (app) => {
   //PR reviewer is added
   app.on('pull_request.review_requested', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
-  
-    app.log.info(`Action done: ${action}\n 
-    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
-    PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
-    Reviewer requested name: ${requested_reviewer.login}, Reviewer requested id: ${requested_reviewer.id}
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+    
+    const reviewer_id = requested_reviewer.id;
+    db_functions.addPullRequestUser(reviewer_id, pull_request.id, 'r');
 
   });
 
@@ -427,7 +425,23 @@ module.exports = async (app) => {
   app.on('pull_request_review_thread.resolved', async (context) => {
     const { action, repository, pull_request, sender, thread } = context.payload;
   
-    console.log("reactions", thread.comments[0].reactions);
+    console.log("pull")
+    console.log("reactions", thread.comments[0].reactions['+1']);
+
+
+    // pour chaque comment on check le role du user sur le comment 
+    thread.comments.forEach(comment => {
+      
+      if(comment.user.login) {
+        db_functions.fetchPullRequestUserWithCallback(pull_request.id, comment.user.id, (data) => {
+          if(data[0].role = 'r'){
+
+          } else if (data[0].role = 'a'){
+            
+          }
+        })
+      }
+    })
   });
 
   //test hook, use [ node_modules/.bin/probot receive -e issues -p test/fixtures/issues.opened.json ./index.js ] in command line to enter
