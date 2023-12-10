@@ -208,6 +208,15 @@ class DatabaseFunctions {
         }
     }
     
+    fetchBadge(action){
+        try {
+            db_connexion.query(`SELECT * FROM badge WHERE action = '${badge}'`);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
     createBadges(titre, description, action) {
         try {
             db_connexion.query(`INSERT INTO badge (titre, description, action) VALUES ('${titre}', '${description}', '${action}')`);
@@ -274,10 +283,10 @@ class DatabaseFunctions {
         }
     }
 
-    addPullRequestUser(role, userId, prId) {
-        let values = [role, userId, prId];
+    addPullRequestUser(userId, prId, role) {
+        let values = [userId, prId, role];
         try{
-            db_connexion.queryValues(`INSERT INTO utilisateur_pull_request (role, id_utilisateur, id_pull_request) VALUES (?)`, [values]);
+            db_connexion.queryValues(`INSERT INTO utilisateur_pr (id_utilisateur, id_pull_request, role) VALUES (?)`, [values]);
         }
         catch(err) {
             console.error(err);

@@ -425,12 +425,9 @@ module.exports = async (app) => {
 
   //PR has a thread that is resolved
   app.on('pull_request_review_thread.resolved', async (context) => {
-    const { action, repository, pull_request, sender} = context.payload;
+    const { action, repository, pull_request, sender, thread } = context.payload;
   
-    app.log.info(`Action done: ${action}\n 
-    PR id: #${pull_request.id}, \n
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    Resolved by : ${sender.login}, user_id: ${sender.id}\n`);
+    console.log("reactions", thread.comments[0].reactions);
   });
 
   //test hook, use [ node_modules/.bin/probot receive -e issues -p test/fixtures/issues.opened.json ./index.js ] in command line to enter
