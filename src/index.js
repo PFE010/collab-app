@@ -96,7 +96,7 @@ module.exports = async (app) => {
   function printPoints(assignee) {
     db_functions.fetchUserWithCallback(assignee.login, (data) => {
       console.log("----------");
-      console.log("User: " + data[0].nom + " now has: " + data[0].points + " points.");
+      console.log("User: " + data[0].username + " now has: " + data[0].points + " points.");
     });
   } 
 
@@ -194,7 +194,7 @@ module.exports = async (app) => {
     });
   });
 
-  //PR assign -- works
+  //PR assign -- works -- points work
   app.on('pull_request.assigned', (context) => {
 
     const { action, repository, pull_request, assignee} = context.payload;
@@ -202,16 +202,26 @@ module.exports = async (app) => {
 
     logEvent(context);
 
-    // Create assigned user if needed
-    user = pull_request.assignee || pull_request.assignees[0];
-    db_functions.addUserIfNull(user.login, "none", "cant access", 0);
-
-    // Add 2 points to person who created the PR
-    db_functions.addPoints(2, pull_request.user.login);
-    printPoints(pull_request.user);
+    //check if the user exists in the db
+    db_functions.fetchUserWithCallback(pull_request.assignee.login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then add points to him otherwise create user with the associated points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${pull_request.assignee.login} exists in the database.`);
+            db_functions.addPoints(2, pull_request.assignee.login);
+        } else {
+            console.log(`User ${pull_request.assignee.login} does not exist in the database.`);
+            db_functions.addUserIfNull(pull_request.assignee.id, pull_request.assignee.login, 2);
+        }
+    
+    });
+    //doesnt update right away
+    printPoints(assignee);
   });
 
-  //PR unassign -- works
+  //PR unassign -- works -- points work
   app.on('pull_request.unassigned', (context) => {
 
     const { action, repository, pull_request, assignee} = context.payload;
@@ -219,9 +229,22 @@ module.exports = async (app) => {
 
     logEvent(context);
 
-    // Remove points from person who created the PR
-    db_functions.removePoints(2, pull_request.user.login);
-    printPoints(pull_request.user);
+    //check if the user exists in the db
+    db_functions.fetchUserWithCallback(assignee.login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then remove points to him otherwise create user with the 0 points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${assignee.login} exists in the database.`);
+            db_functions.removePoints(2, assignee.login);
+        } else {
+            console.log(`User ${assignee.login} does not exist in the database.`);
+            db_functions.addUserIfNull(assignee.id, assignee.login, 0);
+        }
+    });
+
+    printPoints(assignee);
   });
   
 
@@ -269,6 +292,22 @@ module.exports = async (app) => {
     Reviewer requested name: ${requested_reviewer.login}, Reviewer requested id: ${requested_reviewer.id}
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
+
+    //check if the user exists in the db
+    db_functions.fetchUserWithCallback(requested_reviewer.login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then add points to him otherwise create user with the associated points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${requested_reviewer.login} exists in the database.`);
+            db_functions.addPoints(1, requested_reviewer.login);
+        } else {
+            console.log(`User ${requested_reviewer.login} does not exist in the database.`);
+            db_functions.addUserIfNull(requested_reviewer.id, requested_reviewer.login, 1);
+        }
+    
+    });
 
   });
 
@@ -318,6 +357,18 @@ module.exports = async (app) => {
     Comment created at: ${comment.created_at}, Comment updated at: ${comment.updated_at},\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
+
+    db_functions.fetchUserWithCallback(comment.user.login, (data) => {
+      console.log("----------");
+      
+      if (data) {
+            console.log(`User ${comment.user.login} exists in the database.`);
+        } else {
+            console.log(`User ${comment.user.login} does not exist in the database.`);
+            db_functions.addUserIfNull(comment.user.id, comment.user.login, 1);
+        }
+      
+    });
 
   });
 
@@ -391,11 +442,26 @@ module.exports = async (app) => {
   //Commenting directly on the code,then finishing review
   app.on('pull_request_review_comment.created', async (context) => {
     const { action, repository, pull_request, comment} = context.payload;
+    addPRToBdIfNull(pull_request);
   
     app.log.info(`Action done: ${action}\n 
     PR id: #${pull_request.id}, Comment id: ${comment.id}, Commit id: ${comment.commit_id}, PR request id:${comment.pull_request_review_id}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
+
+    //points are given to the commenter
+    db_functions.fetchUserWithCallback(comment.user.login, (data) => {
+      console.log("----------");
+      
+      if (!Array.isArray(data)) {
+            console.log(`User ${comment.user.login} exists in the database.`);
+            db_functions.addPoints(1, comment.user.id);
+        } else {
+            console.log(`User ${comment.user.login} does not exist in the database.`);
+            db_functions.addUserIfNull(comment.user.id, comment.user.login, 1);
+        }
+      
+    });
 
   });
 
