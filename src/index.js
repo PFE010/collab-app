@@ -61,13 +61,13 @@ module.exports = async (app) => {
   // Initialize the API
   const api = await initializeApi();
 
-  initBadges();
+  // initBadges();
 
-  initPaliers();
+  // initPaliers();
 
-  initUserBadges();
+  // initUserBadges();
 
-  initBadgePalier();
+  // initBadgePalier();
 
 
   function logEvent(context) {
