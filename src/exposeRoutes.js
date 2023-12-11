@@ -1,8 +1,6 @@
 const { DatabaseFunctions } = require('./services/db_functions');
 const express = require('express');
 const cors = require("cors");
-const app = express();
-app.use(cors());
 
 module.exports = async (app, getRouter) => {
     const db_functions = new DatabaseFunctions()
@@ -14,13 +12,13 @@ module.exports = async (app, getRouter) => {
     router.use(require("express").static("public"));
 
     // Get all pull requests
-    router.get("/pullRequests", cors(), (req, res) => {
+    router.get("/pullRequests", (req, res) => {
     db_functions.fetchAllPr((result) => {
         console.log(result);
         res.send(result)});
     });
 
-    router.get("/users", cors(), (req, res) => {
+    router.get("/users", (req, res) => {
     db_functions.getfulltableWithCallback('utilisateur', (users) => {
         db_functions.getfulltableWithCallback('utilisateur_badge', (userBadges) => {
         db_functions.getfulltableWithCallback('badge_palier', (badgePaliers) => {
