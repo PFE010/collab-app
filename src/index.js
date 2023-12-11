@@ -395,7 +395,7 @@ module.exports = async (app) => {
 
   });
 
-  //PR is being commented on
+  //PR is being commented on -- points work
   app.on('issue_comment.created', (context) => {
     const { action, repository,issue, comment} = context.payload;
   
@@ -406,7 +406,10 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
-    userAddPoints(comment.user.login, comment.user.id, 2);
+    //only add points if the PR is still open
+    if(issue.state != "closed"){
+      userAddPoints(comment.user.login, comment.user.id, 2);
+    }
 
   });
 
@@ -423,7 +426,7 @@ module.exports = async (app) => {
 
   });
 
-  //PR comment is being deleted
+  //PR comment is being deleted -- points work
   app.on('issue_comment.deleted', (context) => {
     const { action, repository,issue, comment} = context.payload;
 
