@@ -31,7 +31,7 @@ class Utils {
         this.db_functions.getfulltableWithCallback('badge', (badges) => {
           badges.forEach(badge => {
             const { id_badge } = badge;
-            this.db_functions.addUserBadge(id_user, id_badge, 0, 1);
+            this.db_functions.addUserBadge(id_user, id_badge, 0, 0);
           });
         })
       })

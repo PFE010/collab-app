@@ -159,10 +159,10 @@ class DatabaseFunctions {
         }
     }
 
-    addUserIfNull(id_utilisateur, username, points) {
+    addUserIfNullWithCallback(id_utilisateur, username, points, callback) {
         try {
-            db_connexion.queryValues(`
-                INSERT IGNORE INTO utilisateur (id_utilisateur, username, points) VALUES ('${id_utilisateur}', '${username}', '${points}')`);
+            db_connexion.queryCallback(`
+                INSERT IGNORE INTO utilisateur (id_utilisateur, username, points) VALUES ('${id_utilisateur}', '${username}', '${points}')`, callback);
         } catch (err) {
             console.error(err);
         }
@@ -301,6 +301,16 @@ class DatabaseFunctions {
         console.log("values", userId, prId, role)
         try{
             db_connexion.queryValues(`INSERT INTO utilisateur_pr (id_utilisateur, id_pull_request, role) VALUES ('${userId}', '${prId}', '${role}')`);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    removePullRequestUser(userId, prId, role) {
+        console.log("values", userId, prId, role)
+        try{
+            db_connexion.queryValues(`DELETE FROM utilisateur_pr WHERE id_utilisateur = '${userId}' AND id_pull_request = '${prId}' AND role = '${role}';`);
         }
         catch(err) {
             console.error(err);

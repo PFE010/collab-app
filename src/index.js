@@ -148,36 +148,38 @@ module.exports = async (app) => {
 
   //PR assign -- works
   app.on('pull_request.assigned', (context) => {
-
     const { action, repository, pull_request, assignee} = context.payload;
     addPRToBdIfNull(pull_request, () => {
-
-      // Create assigned user if needed
-      user = pull_request.assignee || pull_request.assignees[0];
-      db_functions.addUserIfNull(user.id, user.login, 0);
-      db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
-
-      
-      // Add 2 points to person who created the PR
-      db_functions.addPoints(pull_request.user.login, 2);
-      printPoints(pull_request.user);
+      const user = pull_request.user;
+      // Create assigned user if needed  
+      db_functions.addUserIfNullWithCallback(user.id, user.login, 0, () => {
+        db_functions.addUserIfNullWithCallback(assignee.id, assignee.login, 0, () => {
+          db_functions.addPullRequestUser(assignee.id, pull_request.id, 'a');
+        
+          // Add 2 points to person who created the PR
+          db_functions.addPoints(pull_request.user.id, 2);
+          printPoints(pull_request.user);
+        });
+      });
     });
   });
 
   //PR unassign -- works
   app.on('pull_request.unassigned', (context) => {
-
     const { action, repository, pull_request, assignee} = context.payload;
     addPRToBdIfNull(pull_request, () => {
       // Create assigned user if needed
-      user = pull_request.assignee || pull_request.assignees[0];
-      db_functions.addUserIfNull(user.id, user.login, 0);
-      db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
+      const user = pull_request.user;
+  
+      db_functions.addUserIfNullWithCallback(user.id, user.login, 0, () => {
+        db_functions.addUserIfNullWithCallback(assignee.id, assignee.login, 0, () => {
+          db_functions.removePullRequestUser(assignee.id, pull_request.id, 'a');
 
-      
-      // Add 2 points to person who created the PR
-      db_functions.addPoints(pull_request.user.login, 2);
-      printPoints(pull_request.user);
+          // Add 2 points to person who created the PR
+          db_functions.addPoints(pull_request.user.id, 2);
+          printPoints(pull_request.user);
+        });
+      }) 
     });
   });
   
@@ -213,6 +215,8 @@ module.exports = async (app) => {
       // Check if the pull request is merged
       if (pull_request.merged) {
         db_functions.editPRField(pull_request.id, 'date_merge',  utils.convertDate(pull_request.merged_at), utils.convertDate(pull_request.updated_at));
+        db_functions.addPoints(pull_request.assignee.id, 4);
+        utils.updateProgression('merge', pull_request.assignee.id, 1);
       }
     });
   }); 
@@ -223,8 +227,9 @@ module.exports = async (app) => {
     addPRToBdIfNull(pull_request, () => {
       console.log("pr", pull_request);
       const { id, login } = requested_reviewer;
-      db_functions.addUserIfNull(id, login, 0);
-      db_functions.addPullRequestUser(id, pull_request.id, 'r');
+      db_functions.addUserIfNullWithCallback(id, login, 0, () => {
+        db_functions.addPullRequestUser(id, pull_request.id, 'r');
+      });
     });
   });
 
