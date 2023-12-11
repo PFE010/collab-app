@@ -458,9 +458,11 @@ module.exports = async (app) => {
   });
 
   //Comment submitted on a commit for review or when changes are requested or when approuved
+  //Points for when PR has requested changes and been approuved -- 
   app.on('pull_request_review.submitted', async (context) => {
 
     const { action, repository, pull_request, review} = context.payload;
+    addPRToBdIfNull(pull_request);
   
     app.log.info(`Action done: ${action}\n 
     Review id: #${review.id}, review state: ${review.state}, commit id: ${review.commit_id},\n
@@ -474,10 +476,12 @@ module.exports = async (app) => {
 
     if(review.state === "changes_requested"){
       app.log.info(`Changes have been requested by ${review.user.login} on ${pull_request.user.login}'s PR`);
+      userAddPoints(review.user.login, review.user.id, 2);
     }
 
     if(review.state === "approved"){
       app.log.info(`PR has been approved by ${review.user.login} of ${pull_request.user.login}`);
+      userAddPoints(review.user.login, review.user.id, 3);
     }
 
   });
@@ -492,19 +496,7 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
-    //points are given to the commenter
-    db_functions.fetchUserWithCallback(comment.user.login, (data) => {
-      console.log("----------");
-      
-      if (!Array.isArray(data)) {
-            console.log(`User ${comment.user.login} exists in the database.`);
-            db_functions.addPoints(1, comment.user.id);
-        } else {
-            console.log(`User ${comment.user.login} does not exist in the database.`);
-            db_functions.addUserIfNull(comment.user.id, comment.user.login, 1);
-        }
-      
-    });
+    userAddPoints(comment.user.login, omment.user.id, 2);
 
   });
 
@@ -530,9 +522,12 @@ module.exports = async (app) => {
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n
     Deleted by: ${sender.login}`);
 
+    //Remove points to the person's whose comment got deleted
+    userRemovePoints(comment.user.login, comment.user.id, 2);
+
   });
 
-  //PR has a thread that is resolved
+  //PR has a thread that is resolved and more points for reactions
   app.on('pull_request_review_thread.resolved', async (context) => {
     const { action, repository, pull_request, sender} = context.payload;
   
