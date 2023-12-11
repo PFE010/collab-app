@@ -340,7 +340,8 @@ module.exports = async (app) => {
   //PR reviewer is added -- points work
   app.on('pull_request.review_requested', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
-  
+    addPRToBdIfNull(pull_request);
+
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
     PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
@@ -356,7 +357,8 @@ module.exports = async (app) => {
    //PR reviewer is unadded -- points work
    app.on('pull_request.review_request_removed', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
-  
+    addPRToBdIfNull(pull_request);
+
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
     PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
@@ -371,9 +373,10 @@ module.exports = async (app) => {
 
 
 
-  //Commit on a PR -- works (event triggered when a new commit is added to a PR)
+  //Commit on a PR -- works (event triggered when a new commit is added to a PR) -- both points work
   app.on('pull_request.synchronize', context => {
     const { action, repository, pull_request, sender} = context.payload;
+    addPRToBdIfNull(pull_request);
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
@@ -382,10 +385,12 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Commit done by : ${sender.login}, user_id: ${sender.id}\n`);
 
-    
-
     if(sender.id != pull_request.user.id){
       app.log.info(`There was a suggestion of code done by: ${sender.login} on the PR which belongs to ${pull_request.user.login} \n`);
+      userAddPoints(sender.login, sender.id, 1);
+    }else{
+      console.log("Pr user is the one who committed")
+      userAddPoints(pull_request.user.login, pull_request.user.id, 2);
     }
 
   });
