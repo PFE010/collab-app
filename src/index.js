@@ -282,9 +282,9 @@ module.exports = async (app) => {
   });
   
 
-  //PR is edited when the description is added or edited --works
+  //PR is edited when the description is added or edited -- points works
   app.on('pull_request.edited', (context) => {
-    const { action, repository, pull_request, changes} = context.payload;
+    const { action, repository, pull_request, sender} = context.payload;
     addPRToBdIfNull(pull_request);
 
     // Check if the pull request has a description
@@ -292,6 +292,10 @@ module.exports = async (app) => {
       app.log.info(`PR description was added: ${pull_request.body} \n`);
     }
     db_functions.editPRField(pull_request.number, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
+
+    //add points when user puts a description
+    userAddPoints(sender.login, sender.id, 1);
+
   });
 
   //Reopening a PR -- works
