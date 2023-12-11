@@ -43,10 +43,32 @@ module.exports = async (app, { getRouter }) => {
   // Use any middleware
   router.use(require("express").static("public"));
 
-  // Add a new route
+  // Get all pull requests
   router.get("/pullRequests", cors(), (req, res) => {
     db_functions.fetchAllPr((result) => {
       console.log(result);
+      res.send(result)});
+  });
+
+  // Get all pull users, and return all the tier badges
+  router.get("/users", cors(), (req, res) => {
+    db_functions.getfulltableWithCallback((users) => {
+      users.foreach(user => {
+        db_functions.fetchUserBadgeWithCallback(user.id_utilisateur, (userBadges) => {
+          let badges = []
+          userBadges.foreach(userBadge => {
+            if(userBadge.numeroPalier > 0) {
+              db_functions.fetchBadgePalierWithCallback(userBadge.id_badge, (badgePalier) => {
+                db_functions.fetchPalierWithCallback(badgePalier.id_palier, (palier) => {
+                  badges.push(palier[0]);
+                })
+              })
+            }
+          })
+        })
+      })
+
+
       res.send(result)});
   });
 

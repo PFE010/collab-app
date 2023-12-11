@@ -57,7 +57,7 @@ class Utils {
   updateProgression(action, id_user, increment) {
     this.db_functions.fetchBadgeWithCallback(action, (badge) => {
       this.db_functions.updateProgressionWithCallback(id_user, badge[0].id_badge, increment, (res) => {
-        this.db_functions.fetchUserBadgeWithCallback(id_user, badge[0].id_badge, (userBadge) => {
+        this.db_functions.fetchSingleUserBadgeWithCallback(id_user, badge[0].id_badge, (userBadge) => {
           const progression = userBadge[0].progression;
           this.db_functions.fetchBadgePalierWithCallback(badge[0].id_badge, (badgePaliers) => {
             badgePaliers.forEach(badgePalier => {

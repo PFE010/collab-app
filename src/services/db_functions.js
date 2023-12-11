@@ -59,7 +59,6 @@ class DatabaseFunctions {
     editPRField(prId, field, value, date) {
         try {
             const query = `UPDATE pull_request SET ${field} = '${value}', date_last_update = '${date}' WHERE id_pull_request = ${prId}`;
-            console.log("query", query)
             return db_connexion.query(query);
         } catch (err) {
             console.error(err);
@@ -364,9 +363,18 @@ class DatabaseFunctions {
         }
     }
     
-    fetchUserBadgeWithCallback(id_utilisateur, id_badge, callback){
+    fetchSingleUserBadgeWithCallback(id_utilisateur, id_badge, callback){
         try{
             return db_connexion.queryCallback(`SELECT * FROM utilisateur_badge WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    } 
+
+    fetchUserBadgeWithCallback(id_utilisateur, callback){
+        try{
+            return db_connexion.queryCallback(`SELECT * FROM utilisateur_badge WHERE id_utilisateur = ${id_utilisateur}`, callback);
         }
         catch(err) {
             console.error(err);
