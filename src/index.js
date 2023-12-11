@@ -93,10 +93,44 @@ module.exports = async (app) => {
       }
   } 
 
+  function userAddPoints(login, id, points){
+     //check if the user exists in the db
+     db_functions.fetchUserWithCallback(login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then remove points to him otherwise create user with the 0 points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${login} exists in the database.`);
+            db_functions.addPoints(points, login);
+        } else {
+            console.log(`User ${login} does not exist in the database.`);
+            db_functions.addUserIfNull(id, login, points);
+        }
+    });
+  }
+
+  function userRemovePoints(login, id, points){
+    //check if the user exists in the db
+    db_functions.fetchUserWithCallback(login, (data) => {
+     console.log("----------");
+     console.log(data);
+     
+     //if user exists then remove points to him otherwise create user with the 0 points
+     if (Array.isArray(data) && data.length > 0) {
+           console.log(`User ${login} exists in the database.`);
+           db_functions.removePoints(points, login);
+       } else {
+           console.log(`User ${login} does not exist in the database.`);
+           db_functions.addUserIfNull(id, login, 0);
+       }
+   });
+ }
+
   function printPoints(assignee) {
     db_functions.fetchUserWithCallback(assignee.login, (data) => {
       console.log("----------");
-      console.log("User: " + data[0].nom + " now has: " + data[0].points + " points.");
+      console.log("User: " + data[0].username + " now has: " + data[0].points + " points.");
     });
   } 
 
@@ -108,7 +142,7 @@ module.exports = async (app) => {
     })
   }
 
-  // Pull request open -- works
+  // Pull request open -- points works
   app.on('pull_request.opened', async (context) => {
 
     const { action, repository, pull_request} = context.payload;
@@ -123,8 +157,8 @@ module.exports = async (app) => {
     }
 
     db_functions.addPR(pull_request.number, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
-    db_functions.addPoints(2, pull_request.user.id);
-    printPoints(assignee);
+    userAddPoints(pull_request.user.login, pull_request.user.id, 2);
+    //printPoints(pull_request.user);
   });
   
   //PR is being labeled --- works
@@ -194,7 +228,7 @@ module.exports = async (app) => {
     });
   });
 
-  //PR assign -- works
+  //PR assign -- works -- points work
   app.on('pull_request.assigned', (context) => {
 
     const { action, repository, pull_request, assignee} = context.payload;
@@ -202,16 +236,26 @@ module.exports = async (app) => {
 
     logEvent(context);
 
-    // Create assigned user if needed
-    user = pull_request.assignee || pull_request.assignees[0];
-    db_functions.addUserIfNull(user.login, "none", "cant access", 0);
-
-    // Add 2 points to person who created the PR
-    db_functions.addPoints(2, pull_request.user.login);
-    printPoints(pull_request.user);
+    //check if the user exists in the db
+    db_functions.fetchUserWithCallback(pull_request.assignee.login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then add points to him otherwise create user with the associated points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${pull_request.assignee.login} exists in the database.`);
+            db_functions.addPoints(2, pull_request.assignee.login);
+        } else {
+            console.log(`User ${pull_request.assignee.login} does not exist in the database.`);
+            db_functions.addUserIfNull(pull_request.assignee.id, pull_request.assignee.login, 2);
+        }
+    
+    });
+    //doesnt update right away
+    //printPoints(assignee);
   });
 
-  //PR unassign -- works
+  //PR unassign -- works -- points work
   app.on('pull_request.unassigned', (context) => {
 
     const { action, repository, pull_request, assignee} = context.payload;
@@ -219,15 +263,28 @@ module.exports = async (app) => {
 
     logEvent(context);
 
-    // Remove points from person who created the PR
-    db_functions.removePoints(2, pull_request.user.login);
-    printPoints(pull_request.user);
+    //check if the user exists in the db
+    db_functions.fetchUserWithCallback(assignee.login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then remove points to him otherwise create user with the 0 points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${assignee.login} exists in the database.`);
+            db_functions.removePoints(2, assignee.login);
+        } else {
+            console.log(`User ${assignee.login} does not exist in the database.`);
+            db_functions.addUserIfNull(assignee.id, assignee.login, 0);
+        }
+    });
+
+    //printPoints(assignee);
   });
   
 
-  //PR is edited when the description is added or edited --works
+  //PR is edited when the description is added or edited -- points works
   app.on('pull_request.edited', (context) => {
-    const { action, repository, pull_request, changes} = context.payload;
+    const { action, repository, pull_request, sender} = context.payload;
     addPRToBdIfNull(pull_request);
 
     // Check if the pull request has a description
@@ -235,6 +292,10 @@ module.exports = async (app) => {
       app.log.info(`PR description was added: ${pull_request.body} \n`);
     }
     db_functions.editPRField(pull_request.number, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
+
+    //add points when user puts a description
+    userAddPoints(sender.login, sender.id, 1);
+
   });
 
   //Reopening a PR -- works
@@ -245,7 +306,7 @@ module.exports = async (app) => {
     db_functions.editPRField(pull_request.number, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
   });
 
-  //PR closed -- works
+  //PR closed -- works-- points only when merged -- points work
   app.on('pull_request.closed', (context) => {
     const { action, repository, pull_request } = context.payload;
     addPRToBdIfNull(pull_request);
@@ -256,13 +317,31 @@ module.exports = async (app) => {
     // Check if the pull request is merged
     if (pull_request.merged) {
       db_functions.editPRField(pull_request.number, 'date_merge',  helper.convertDate(pull_request.merged_at), helper.convertDate(pull_request.updated_at));
+
+      //check if the user exists in the db
+      db_functions.fetchUserWithCallback(pull_request.merged_by.login, (data) => {
+      console.log("----------");
+      console.log(data);
+      
+      //if user exists then remove points to him otherwise create user with the 0 points
+      if (Array.isArray(data) && data.length > 0) {
+            console.log(`User ${pull_request.merged_by.login} exists in the database.`);
+            db_functions.addPoints(2, pull_request.merged_by.login);
+        } else {
+            console.log(`User ${pull_request.merged_by.login} does not exist in the database.`);
+            db_functions.addUserIfNull(pull_request.merged_by.id, pull_request.merged_by.login, 2);
+        }
+    });
+
+      printPoints(pull_request.merged_by);
     }
   }); 
 
-  //PR reviewer is added
+  //PR reviewer is added -- points work
   app.on('pull_request.review_requested', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
-  
+    addPRToBdIfNull(pull_request);
+
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
     PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
@@ -270,12 +349,16 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
+    userAddPoints(requested_reviewer.login, requested_reviewer.id, 1);
+    //printPoints(requested_reviewer);
+
   });
 
-   //PR reviewer is unadded
+   //PR reviewer is unadded -- points work
    app.on('pull_request.review_request_removed', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
-  
+    addPRToBdIfNull(pull_request);
+
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
     PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
@@ -283,13 +366,17 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
+    userRemovePoints(requested_reviewer.login, requested_reviewer.id, 1);
+    //printPoints(requested_reviewer);
+
   });
 
 
 
-  //Commit on a PR -- works (event triggered when a new commit is added to a PR)
+  //Commit on a PR -- works (event triggered when a new commit is added to a PR) -- both points work
   app.on('pull_request.synchronize', context => {
     const { action, repository, pull_request, sender} = context.payload;
+    addPRToBdIfNull(pull_request);
   
     app.log.info(`Action done: ${action}\n 
     PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
@@ -298,12 +385,12 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Commit done by : ${sender.login}, user_id: ${sender.id}\n`);
 
-    if (pull_request.body) {
-      app.log.info(`PR description: ${pull_request.body} \n`);
-    }
-
     if(sender.id != pull_request.user.id){
       app.log.info(`There was a suggestion of code done by: ${sender.login} on the PR which belongs to ${pull_request.user.login} \n`);
+      userAddPoints(sender.login, sender.id, 1);
+    }else{
+      console.log("Pr user is the one who committed")
+      userAddPoints(pull_request.user.login, pull_request.user.id, 2);
     }
 
   });
@@ -319,9 +406,11 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
+    userAddPoints(comment.user.login, comment.user.id, 2);
+
   });
 
-  //PR comment is being edited
+  //PR comment is being edited -- no points for it
   app.on('issue_comment.edited', (context) => {
     const { action, repository,issue, comment} = context.payload;
   
@@ -337,7 +426,7 @@ module.exports = async (app) => {
   //PR comment is being deleted
   app.on('issue_comment.deleted', (context) => {
     const { action, repository,issue, comment} = context.payload;
-  
+
     app.log.info(`Action done: ${action}\n 
     Issue number: #${issue.number}, Issue id: ${issue.id}, PR url: ${issue.pull_request.url},\n
     Comment id: ${comment.id}, comment total reactions: ${comment.reactions.total_count},\n
@@ -345,9 +434,11 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
+    userRemovePoints(comment.user.login, comment.user.id, 2);
+
   });
 
-  // Existing comment on a PR is edited
+  // Existing comment on a PR is edited -- no points
   app.on('pull_request_review.edited', (context) => {
     const { action, repository, pull_request, review} = context.payload;
   
@@ -391,15 +482,30 @@ module.exports = async (app) => {
   //Commenting directly on the code,then finishing review
   app.on('pull_request_review_comment.created', async (context) => {
     const { action, repository, pull_request, comment} = context.payload;
+    addPRToBdIfNull(pull_request);
   
     app.log.info(`Action done: ${action}\n 
     PR id: #${pull_request.id}, Comment id: ${comment.id}, Commit id: ${comment.commit_id}, PR request id:${comment.pull_request_review_id}\n
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
+    //points are given to the commenter
+    db_functions.fetchUserWithCallback(comment.user.login, (data) => {
+      console.log("----------");
+      
+      if (!Array.isArray(data)) {
+            console.log(`User ${comment.user.login} exists in the database.`);
+            db_functions.addPoints(1, comment.user.id);
+        } else {
+            console.log(`User ${comment.user.login} does not exist in the database.`);
+            db_functions.addUserIfNull(comment.user.id, comment.user.login, 1);
+        }
+      
+    });
+
   });
 
-  //Comment on the code being edited
+  //Comment on the code being edited -- no points
   app.on('pull_request_review_comment.edited', async (context) => {
 
     const { action, repository, pull_request, comment, sender} = context.payload;
