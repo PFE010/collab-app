@@ -406,21 +406,11 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
-    db_functions.fetchUserWithCallback(comment.user.login, (data) => {
-      console.log("----------");
-      
-      if (data) {
-            console.log(`User ${comment.user.login} exists in the database.`);
-        } else {
-            console.log(`User ${comment.user.login} does not exist in the database.`);
-            db_functions.addUserIfNull(comment.user.id, comment.user.login, 1);
-        }
-      
-    });
+    userAddPoints(comment.user.login, comment.user.id, 2);
 
   });
 
-  //PR comment is being edited
+  //PR comment is being edited -- no points for it
   app.on('issue_comment.edited', (context) => {
     const { action, repository,issue, comment} = context.payload;
   
@@ -436,7 +426,7 @@ module.exports = async (app) => {
   //PR comment is being deleted
   app.on('issue_comment.deleted', (context) => {
     const { action, repository,issue, comment} = context.payload;
-  
+
     app.log.info(`Action done: ${action}\n 
     Issue number: #${issue.number}, Issue id: ${issue.id}, PR url: ${issue.pull_request.url},\n
     Comment id: ${comment.id}, comment total reactions: ${comment.reactions.total_count},\n
@@ -444,9 +434,11 @@ module.exports = async (app) => {
     Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name}, \n
     Comment made by : ${comment.user.login}, user_id: ${comment.user.id}\n`);
 
+    userRemovePoints(comment.user.login, comment.user.id, 2);
+
   });
 
-  // Existing comment on a PR is edited
+  // Existing comment on a PR is edited -- no points
   app.on('pull_request_review.edited', (context) => {
     const { action, repository, pull_request, review} = context.payload;
   
@@ -513,7 +505,7 @@ module.exports = async (app) => {
 
   });
 
-  //Comment on the code being edited
+  //Comment on the code being edited -- no points
   app.on('pull_request_review_comment.edited', async (context) => {
 
     const { action, repository, pull_request, comment, sender} = context.payload;
