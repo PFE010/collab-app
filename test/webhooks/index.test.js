@@ -1,12 +1,10 @@
-// You can import your modules
-// import index from '../index'
+const nock = require("nock");
 
-import nock from "nock";
-// Requiring our app implementation
-import myProbotApp from "../";
-import { Probot, ProbotOctokit } from "probot";
+const myProbotApp = require("../../index.js");
+
+const { Probot, ProbotOctokit } = require("probot");
 // Requiring our fixtures
-import payload from "./fixtures/issues.opened.json";
+const payload = require("./fixtures/issues.opened.json");
 const issueCreatedBody = { body: "Thanks for opening this issue!" };
 const fs = require("fs");
 const path = require("path");
@@ -17,7 +15,7 @@ const privateKey = fs.readFileSync(
 );
 
 describe("My Probot app", () => {
-  let probot: any;
+  let probot;
 
   beforeEach(() => {
     nock.disableNetConnect();
@@ -46,7 +44,7 @@ describe("My Probot app", () => {
       })
 
       // Test that a comment is posted
-      .post("/repos/hiimbex/testing-things/issues/1/comments", (body: any) => {
+      .post("/repos/hiimbex/testing-things/issues/1/comments", (body) => {
         expect(body).toMatchObject(issueCreatedBody);
         return true;
       })
@@ -66,9 +64,6 @@ describe("My Probot app", () => {
 
 // For more information about testing with Jest see:
 // https://facebook.github.io/jest/
-
-// For more information about using TypeScript in your tests, Jest recommends:
-// https://github.com/kulshekhar/ts-jest
 
 // For more information about testing with Nock see:
 // https://github.com/nock/nock
