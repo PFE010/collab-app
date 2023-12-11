@@ -13,7 +13,6 @@
   ],
   "scripts": {
     "start": "probot run ./src/index.js",
-    "build": "",
     "test": "jest"
   },
   "dependencies": {
