@@ -337,7 +337,7 @@ module.exports = async (app) => {
     }
   }); 
 
-  //PR reviewer is added
+  //PR reviewer is added -- points work
   app.on('pull_request.review_requested', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
   
@@ -349,11 +349,11 @@ module.exports = async (app) => {
     PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
 
     userAddPoints(requested_reviewer.login, requested_reviewer.id, 1);
-    printPoints(requested_reviewer);
+    //printPoints(requested_reviewer);
 
   });
 
-   //PR reviewer is unadded
+   //PR reviewer is unadded -- points work
    app.on('pull_request.review_request_removed', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
   
