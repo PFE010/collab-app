@@ -6,7 +6,7 @@ name: Build and deploy Node.js app to Azure Web App - collab-app-service
 on:
   push:
     branches:
-      - main
+      - olivier
   workflow_dispatch:
 
 jobs:
