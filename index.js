@@ -50,29 +50,33 @@ module.exports = async (app, { getRouter }) => {
       res.send(result)});
   });
 
-  // Get all pull users, and return all the tier badges
   router.get("/users", cors(), (req, res) => {
-    db_functions.getfulltableWithCallback((users) => {
-      users.foreach(user => {
-        db_functions.fetchUserBadgeWithCallback(user.id_utilisateur, (userBadges) => {
-          let badges = []
-          userBadges.foreach(userBadge => {
-            if(userBadge.numeroPalier > 0) {
-              db_functions.fetchBadgePalierWithCallback(userBadge.id_badge, (badgePalier) => {
-                db_functions.fetchPalierWithCallback(badgePalier.id_palier, (palier) => {
-                  badges.push(palier[0]);
+    db_functions.getfulltableWithCallback('utilisateur', (users) => {
+      db_functions.getfulltableWithCallback('utilisateur_badge', (userBadges) => {
+        db_functions.getfulltableWithCallback('badge_palier', (badgePaliers) => {
+          db_functions.getfulltableWithCallback('palier', (paliers) => {
+            const response = users.map(user => {
+              let badges = []
+              
+              userBadges.filter(userBadge => userBadge.id_utilisateur == user.id_utilisateur && userBadge.numero_palier > 0).forEach(userBadge => {
+                badgePaliers.filter(badgePalier => badgePalier.id_badge == userBadge.id_badge).forEach(badgePalier => {
+                  paliers.filter(palier => palier.id_palier == badgePalier.id_palier && palier.tier == userBadge.numero_palier).forEach(palier => {
+                    badges.push(palier);
+                  })
                 })
               })
-            }
+              return {
+                ...user,
+                badges: badges
+              }
+            });
+            console.log(response)
+            res.send(response);
           })
         })
       })
-
-
-      res.send(result)});
-  });
+    });
+  })
 
   setupWebhookEvents(app);
-
-
 }; 
