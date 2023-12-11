@@ -1,10 +1,7 @@
 const Utils = require('../src/helper');
 const initializeApi = require('./services/api');
-const setupApiEndpoints = require('./exposeRoutes.js');
 
-module.exports = async (app, { getRouter }) => {
-  setupApiEndpoints(app, getRouter);
-
+module.exports = async (app) => {
   require('dotenv').config();
   require('../src/helper');
 
