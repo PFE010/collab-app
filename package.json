@@ -13,7 +13,6 @@
   ],
   "scripts": {
     "start": "probot run ./index.js",
-    "test": "jest"
   },
   "dependencies": {
     "@octokit/core": "^5.0.2",
