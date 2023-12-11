@@ -168,7 +168,6 @@ class DatabaseFunctions {
         }
     }
     
-    
     deleteUser(userId) {
         try {
             db_connexion.queryValues(`DELETE FROM utilisateur WHERE id_utilisateur = ?`, userId);
@@ -205,6 +204,15 @@ class DatabaseFunctions {
         }
     }
 
+    fetchBadgeWithCallback(action, callback){
+        try {
+            db_connexion.queryCallback(`SELECT * FROM badge WHERE action = '${action}'`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
     createBadges(titre, description, action) {
         try {
             db_connexion.query(`INSERT INTO badge (titre, description, action) VALUES ('${titre}', '${description}', '${action}')`);
@@ -223,10 +231,10 @@ class DatabaseFunctions {
         }
     }
     
-    createPaliers(points_attrib, titre_palier, nb_action_requise, image) {
+    createPaliers(points_attrib, titre_palier, nb_action_requise, image, tier) {
         try {
-            db_connexion.queryValues(`INSERT INTO palier (points_attrib, titre_palier, nb_action_requise, image) 
-            VALUES (${points_attrib}, '${titre_palier}', ${nb_action_requise}, '${image}');`);
+            db_connexion.queryValues(`INSERT INTO palier (points_attrib, titre_palier, nb_action_requise, image, tier) 
+            VALUES (${points_attrib}, '${titre_palier}', ${nb_action_requise}, '${image}', '${tier}');`);
         }
         catch(err) {
             console.error(err);
@@ -252,6 +260,15 @@ class DatabaseFunctions {
         }
     }
 
+    fetchPalierWithCallback(id_palier, callback) {
+        try {
+            db_connexion.queryCallback(`SELECT * FROM palier WHERE id_palier = '${id_palier}'`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
     addUserBadge(id_user, id_badge, progression, palier) {
         try {
             db_connexion.queryValues(`INSERT INTO utilisateur_badge (id_utilisateur, id_badge, progression, numero_palier) 
@@ -271,6 +288,15 @@ class DatabaseFunctions {
         }
     }
 
+    fetchBadgePalierWithCallback(id_badge, callback) {
+        try{
+            db_connexion.queryCallback(`SELECT * FROM badge_palier WHERE id_badge = '${id_badge}'`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
     addPullRequestUser(userId, prId, role) {
         console.log("values", userId, prId, role)
         try{
@@ -283,27 +309,25 @@ class DatabaseFunctions {
 
     fetchPullRequestUserWithCallback(id_pull_request, id_utilisateur, callback){
         try{
-            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur_pr WHERE id_utilisateur = '${id_utilisateur}' AND id_pull_request = '${id_pull_request}`, callback);
+            db_connexion.queryCallback(`SELECT * FROM utilisateur_pr WHERE id_utilisateur = '${id_utilisateur}' AND id_pull_request = '${id_pull_request}'`, callback);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    addPoints(numPoints, username) {
-        let values = [numPoints, username];
+    addPoints(id_utilisateur, numPoints) {
         try{
-            return db_connexion.queryValues(`UPDATE utilisateur SET points = points + ? WHERE username = ?`, values);
+            return db_connexion.query(`UPDATE utilisateur SET points = points + '${numPoints}' WHERE id_utilisateur = '${id_utilisateur}'`);
         }
         catch(err) {
             console.error(err);
         }
     }
 
-    addPointsWithCallback(numPoints, username, callback) {
-        let values = [numPoints, username];
+    addPointsWithCallback(id_utilisateur, numPoints, callback) {
         try{
-            db_connexion.queryValuesCallback(`UPDATE utilisateur SET points = points + ? WHERE username = ?`, values, callback);
+            db_connexion.queryCallback(`UPDATE utilisateur SET points = points + '${numPoints}' WHERE id_utilisateur = '${id_utilisateur}'`, callback);
         }
         catch(err) {
             console.error(err);
@@ -330,9 +354,28 @@ class DatabaseFunctions {
         }
     }
     
-    updateProgression(id_utilisateur, id_badge, increment) {
+    fetchUserBadgeWithCallback(id_utilisateur, id_badge, callback){
         try{
-            return db_connexion.query(`UPDATE utilisateur_badge SET progression = progression + ${increment} WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`);
+            return db_connexion.queryCallback(`SELECT * FROM utilisateur_badge WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    } 
+
+    updateProgressionWithCallback(id_utilisateur, id_badge, increment, callback) {
+        console.log("query", id_utilisateur, id_badge, increment)
+        try{
+            return db_connexion.queryCallback(`UPDATE utilisateur_badge SET progression = progression + ${increment} WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`, callback);
+        }
+        catch(err) {
+            console.error(err);
+        }
+    }
+
+    updateTier(id_utilisateur, id_badge, tier) {
+        try{
+            return db_connexion.query(`UPDATE utilisateur_badge SET numero_palier = ${tier} WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`);
         }
         catch(err) {
             console.error(err);

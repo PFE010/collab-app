@@ -1,74 +1,23 @@
+const Utils = require('../src/helper');
 const initializeApi = require('./services/api');
 
 module.exports = async (app) => {
   require('dotenv').config();
+  require('../src/helper');
 
-  const helper = require('../src/helper');
   const { DatabaseFunctions } = require('./services/db_functions');
   const db_functions = new DatabaseFunctions();
-  const dummyData = require('./assets/dummyData');
-
-   // for testing only
-  function initPaliers() {
-    dummyData.palierData.forEach(item => {
-      const { points_attrib, titre_palier, nb_action_requise, image } = item;
-      db_functions.createPaliers(points_attrib, titre_palier, nb_action_requise, image)
-    })
-  }
-
-  // for testing only
-  function initBadges() {
-    dummyData.badgesData.forEach(badge => {
-      const { titre, description, action } = badge;
-      db_functions.createBadges(titre, description, action)
-    });
-  }
-
-  // for testing only
-  function initUserBadges() {
-    db_functions.getfulltableWithCallback('utilisateur', (data) => {
-      data.forEach(user => {
-        const id_user = user.id_utilisateur;
-
-        db_functions.getfulltableWithCallback('badge', (badges) => {
-          badges.forEach(badge => {
-            const { id_badge } = badge;
-            db_functions.addUserBadge(id_user, id_badge, 0, 1);
-          });
-        })
-      })
-    })
-  }
-
-  // for testing only
-  function initBadgePalier() {
-    db_functions.getfulltableWithCallback('badge', (badges) => {
-      badges.forEach(badge => {
-        console.log("badge", badge)
-        const paliersBadge = dummyData.palierData.filter(palier => palier.titre_palier.includes(badge.titre))
-        console.log("paliers", paliersBadge)
-        paliersBadge.forEach(palier => {
-          db_functions.getPalierWithCallback(palier.titre_palier, (data) => {
-            db_functions.addBadgePaliers(badge.id_badge, data[0].id_palier);
-          })
-        })
-      })
-    })
-  } 
-
-
+  const utils = new Utils(db_functions);
 
   // Initialize the API
   const api = await initializeApi();
 
-  // initBadges();
-
-  // initPaliers();
-
-  // initUserBadges();
-
-  // initBadgePalier();
-
+  /*
+  utils.initBadges();
+  utils.initPaliers();
+  utils.initUserBadges();
+  utils.initBadgePalier();
+  */
 
   function logEvent(context) {
     const { action, repository, pull_request, assignee} = context.payload;
@@ -100,11 +49,14 @@ module.exports = async (app) => {
     });
   } 
 
-  function addPRToBdIfNull(pull_request) {
+  function addPRToBdIfNull(pull_request, callback) {
     db_functions.fetchPrWithCallback(pull_request.id, (data) => {
       if(data === undefined || data.length == 0) {
-        db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
+        console.log("hi")
+        db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, utils.convertDate(pull_request.created_at), null, null, pull_request.state, null);
       }
+
+      callback();
     })
   }
 
@@ -122,8 +74,8 @@ module.exports = async (app) => {
       app.log.info("PR has no description, please add one \n");
     }
 
-    db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, helper.convertDate(pull_request.created_at), null, null, pull_request.state, null);
-    db_functions.addPoints(2, pull_request.user.id);
+    db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, utils.convertDate(pull_request.created_at), null, null, pull_request.state, null);
+    db_functions.addPoints(pull_request.user.id, 2);
     printPoints(assignee);
   });
   
@@ -136,8 +88,8 @@ module.exports = async (app) => {
     logEvent(context);
 
     db_functions.fetchPrWithPromise(pull_request.id).then(data => {
-      labels = helper.labelStringToList(data[0].labels);
-      count = helper.countLabels(data[0].labels);
+      labels = utils.labelStringToList(data[0].labels);
+      count = utils.countLabels(data[0].labels);
       count += 1;
 
       if(labels?.length > 0) {
@@ -147,7 +99,7 @@ module.exports = async (app) => {
         labels = [label.name]
         console.log("empty", labels)
       }
-      db_functions.editPRField(pull_request.id, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at));
+      db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at));
 
       if(count == 1) {
         console.log("count", count)
@@ -155,7 +107,7 @@ module.exports = async (app) => {
 
         assignee = pull_request.assignee || pull_request.assignees[0];
         if(assignee) {
-          db_functions.addPoints(2, assignee.login);
+          db_functions.addPoints(assignee.id, 2);
           printPoints(assignee);
         }
       }
@@ -172,8 +124,8 @@ module.exports = async (app) => {
   
 
     db_functions.fetchPrWithPromise(pull_request.id).then(data => {
-      labels = helper.labelStringToList(data[0].labels);
-      count = helper.countLabels(data[0].labels);
+      labels = utils.labelStringToList(data[0].labels);
+      count = utils.countLabels(data[0].labels);
       count -= 1;
       console.log("labels", labels)
       console.log("label", label)
@@ -182,7 +134,7 @@ module.exports = async (app) => {
         labels.filter(item => item !== label.name);
         console.log("remove", labels)
       }
-      db_functions.editPRField(pull_request.id, 'labels', helper.fromArrayToLabelString(labels), helper.convertDate(pull_request.updated_at)); 
+      db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at)); 
       if(count == 0) {
         assignee = pull_request.assignee || pull_request.assignees[0];
         if(assignee) {
@@ -198,76 +150,82 @@ module.exports = async (app) => {
   app.on('pull_request.assigned', (context) => {
 
     const { action, repository, pull_request, assignee} = context.payload;
-    addPRToBdIfNull(pull_request);
+    addPRToBdIfNull(pull_request, () => {
 
-    logEvent(context);
+      // Create assigned user if needed
+      user = pull_request.assignee || pull_request.assignees[0];
+      db_functions.addUserIfNull(user.id, user.login, 0);
+      db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
 
-    // Create assigned user if needed
-    user = pull_request.assignee || pull_request.assignees[0];
-    db_functions.addUserIfNull(user.id, user.login, 0);
-    db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
-
-    
-    // Add 2 points to person who created the PR
-    db_functions.addPoints(2, pull_request.user.login);
-    printPoints(pull_request.user);
+      
+      // Add 2 points to person who created the PR
+      db_functions.addPoints(pull_request.user.login, 2);
+      printPoints(pull_request.user);
+    });
   });
 
   //PR unassign -- works
   app.on('pull_request.unassigned', (context) => {
 
     const { action, repository, pull_request, assignee} = context.payload;
-    addPRToBdIfNull(pull_request);
+    addPRToBdIfNull(pull_request, () => {
+      // Create assigned user if needed
+      user = pull_request.assignee || pull_request.assignees[0];
+      db_functions.addUserIfNull(user.id, user.login, 0);
+      db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
 
-    logEvent(context);
-
-    // Remove points from person who created the PR
-    db_functions.removePoints(2, pull_request.user.login);
-    printPoints(pull_request.user);
+      
+      // Add 2 points to person who created the PR
+      db_functions.addPoints(pull_request.user.login, 2);
+      printPoints(pull_request.user);
+    });
   });
   
 
   //PR is edited when the description is added or edited --works
   app.on('pull_request.edited', (context) => {
     const { action, repository, pull_request, changes} = context.payload;
-    addPRToBdIfNull(pull_request);
+    addPRToBdIfNull(pull_request, () => {
 
-    // Check if the pull request has a description
-    if (pull_request.body) {
-      app.log.info(`PR description was added: ${pull_request.body} \n`);
-    }
-    db_functions.editPRField(pull_request.id, 'description', pull_request.body, helper.convertDate(pull_request.updated_at));
+      // Check if the pull request has a description
+      if (pull_request.body) {
+        app.log.info(`PR description was added: ${pull_request.body} \n`);
+      }
+      db_functions.editPRField(pull_request.id, 'description', pull_request.body, utils.convertDate(pull_request.updated_at));
+    });
   });
 
   //Reopening a PR -- works
   app.on('pull_request.reopened', (context) => {
     const { action, repository, pull_request} = context.payload;
-    addPRToBdIfNull(pull_request);
-
-    db_functions.editPRField(pull_request.id, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
+    addPRToBdIfNull(pull_request, () => {
+      db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
+    });
   });
 
   //PR closed -- works
   app.on('pull_request.closed', (context) => {
     const { action, repository, pull_request } = context.payload;
-    addPRToBdIfNull(pull_request);
-
-    console.log(pull_request.state)
-    db_functions.editPRField(pull_request.id, 'status', pull_request.state, helper.convertDate(pull_request.updated_at));
-
-    // Check if the pull request is merged
-    if (pull_request.merged) {
-      db_functions.editPRField(pull_request.id, 'date_merge',  helper.convertDate(pull_request.merged_at), helper.convertDate(pull_request.updated_at));
-    }
+    addPRToBdIfNull(pull_request, () => {
+      console.log(pull_request.state)
+      db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
+  
+      // Check if the pull request is merged
+      if (pull_request.merged) {
+        db_functions.editPRField(pull_request.id, 'date_merge',  utils.convertDate(pull_request.merged_at), utils.convertDate(pull_request.updated_at));
+      }
+    });
   }); 
 
   //PR reviewer is added
   app.on('pull_request.review_requested', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
-    
-    const reviewer_id = requested_reviewer.id;
-    db_functions.addPullRequestUser(reviewer_id, pull_request.id, 'r');
-
+    addPRToBdIfNull(pull_request, () => {
+      console.log("pr", pull_request);
+      const { id, login } = requested_reviewer;
+      db_functions.addUserIfNull(id, login, 0);
+      db_functions.addPullRequestUser(id, pull_request.id, 'r');
+    });
   });
 
    //PR reviewer is unadded
@@ -424,23 +382,25 @@ module.exports = async (app) => {
   //PR has a thread that is resolved
   app.on('pull_request_review_thread.resolved', async (context) => {
     const { action, repository, pull_request, sender, thread } = context.payload;
+    addPRToBdIfNull(pull_request, () => {
+      console.log("pull")
+      console.log("reactions", thread.comments[0].reactions['+1']);
   
-    console.log("pull")
-    console.log("reactions", thread.comments[0].reactions['+1']);
-
-
-    // pour chaque comment on check le role du user sur le comment 
-    thread.comments.forEach(comment => {
-      
-      if(comment.user.login) {
-        db_functions.fetchPullRequestUserWithCallback(pull_request.id, comment.user.id, (data) => {
-          if(data[0].role = 'r'){
-            const reactor_increment = comment.reactions['+1'] + comment.reactions['-1'];
-            console.log('points', reactor_increment);
-          }
-        })
-      }
-    })
+  
+      // pour chaque comment on check le role du user sur le comment 
+      thread.comments.forEach(comment => {
+        
+        if(comment.user.login) {
+          db_functions.fetchPullRequestUserWithCallback(pull_request.id, comment.user.id, (data) => {
+            if(data[0].role = 'r'){
+              const reactor_increment = comment.reactions['+1'] - comment.reactions['-1'];
+              db_functions.addPoints(comment.user.id, reactor_increment);
+              utils.updateProgression('react', comment.user.id, reactor_increment);
+            }
+          })
+        }
+      })
+    });
   });
 
   //test hook, use [ node_modules/.bin/probot receive -e issues -p test/fixtures/issues.opened.json ./index.js ] in command line to enter
