@@ -94,7 +94,7 @@ class Utils {
   }
 
   labelStringToList(labelString) {
-    if (labelString.trim() === '') {
+    if (!labelString || labelString.trim() === '') {
       return []; 
     }
 

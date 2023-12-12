@@ -27,62 +27,55 @@ module.exports = (app) => {
   
   //PR is being labeled --- works
   app.on('pull_request.labeled', async (context) => {
-    const { action, repository, pull_request, label} = context.payload;
-    utils.addPRToBdIfNull(pull_request);
+    const { action, repository, pull_request, label, sender} = context.payload;
+    const { id, login } = pull_request.assignee;
 
-    let count;
+    utils.addPRToBdIfNull(pull_request, () => {
+      db_functions.fetchPrWithCallback(pull_request.id, (data) => {
 
-    db_functions.fetchPrWithPromise(pull_request.id).then(data => {
-      labels = utils.labelStringToList(data[0].labels);
-      count = utils.countLabels(data[0].labels);
-      count += 1;
+        labels = utils.labelStringToList(data[0].labels);
 
-      if(labels?.length > 0) {
-        labels.push(label.name);
-      } else {
-        labels = [label.name]
-      }
-      db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at));
-
-      if(count == 1) {
-
-        assignee = pull_request.assignee || pull_request.assignees[0];
-        if(assignee) {
-          db_functions.addPoints(2, assignee.id);
+        if(labels?.length > 0) {
+          labels.push(label.name);
+        } else {
+          labels = [label.name]
         }
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching pull request:', error);
-    });
+        utils.addUserToBdIfNull(id, login, () => {
+          db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at));
+          if(sender.id == id) {
+            db_functions.addPoints(1, id);
+          }
+        });
+      });
+      });
   });
 
   //PR is being unlabeled --- works
   app.on('pull_request.unlabeled', async (context) => {
-    const { action, repository, pull_request, label} = context.payload;
-    utils.addPRToBdIfNull(pull_request);
+    const { action, repository, pull_request, label, sender} = context.payload;
+    const { id, login } = pull_request.assignee;
   
-
-    db_functions.fetchPrWithPromise(pull_request.id).then(data => {
-      labels = utils.labelStringToList(data[0].labels);
-      count = utils.countLabels(data[0].labels);
-      count -= 1;
-
-      if(labels?.length > 0) {
-        labels.filter(item => item !== label.name);
-      }
-      db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at)); 
-      if(count == 0) {
-        assignee = pull_request.assignee || pull_request.assignees[0];
-        if(assignee) {
-          db_functions.removePoints(2, assignee.id);
+    utils.addPRToBdIfNull(pull_request, () => {
+      db_functions.fetchPrWithCallback(pull_request.id, (data) => {
+        labels = utils.labelStringToList(data[0].labels);
+        let newLabels;
+        if(labels?.length > 0) {
+          newLabels = labels.filter(item => item !== label.name);
         }
-      }
+        console.log("remove", label.name)
+        console.log("new labels", newLabels);
+        utils.addUserToBdIfNull(id, login, () => {
+          db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(newLabels), utils.convertDate(pull_request.updated_at));
+          if(sender.id == id) {
+            db_functions.removePoints(1, id);
+          }
+        });
+      });
     });
   });
 
   //PR assign -- works -- DONE
-  app.on('pull_request.assigned', (context) => {
+  app.on('pull_request.assigned', async (context) => {
     const { action, repository, pull_request, assignee} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       const user = pull_request.user;
@@ -109,7 +102,7 @@ module.exports = (app) => {
   });
 
   //PR unassign -- works -- DONE
-  app.on('pull_request.unassigned', (context) => {
+  app.on('pull_request.unassigned', async (context) => {
     const { action, repository, pull_request, assignee} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       // Create assigned user if needed
@@ -136,7 +129,7 @@ module.exports = (app) => {
   
 
   //PR is edited when the description is added or edited -- DONE
-  app.on('pull_request.edited', (context) => {
+  app.on('pull_request.edited', async (context) => {
     const { action, repository, pull_request, changes, sender} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       // Check if the pull request has a description
@@ -153,7 +146,7 @@ module.exports = (app) => {
   });
 
   //Reopening a PR -- DONE
-  app.on('pull_request.reopened', (context) => {
+  app.on('pull_request.reopened', async (context) => {
     const { action, repository, pull_request} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
@@ -161,7 +154,7 @@ module.exports = (app) => {
   });
 
   //PR closed  points only when merged 
-  app.on('pull_request.closed', (context) => {
+  app.on('pull_request.closed', async (context) => {
     const { action, repository, pull_request } = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
@@ -183,7 +176,7 @@ module.exports = (app) => {
   }); 
 
   //PR reviewer is added -- DONE
-  app.on('pull_request.review_requested', (context) => {
+  app.on('pull_request.review_requested', async (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       const { id, login } = requested_reviewer;
@@ -195,7 +188,7 @@ module.exports = (app) => {
   });
 
    //PR reviewer is unadded -- DONE
-  app.on('pull_request.review_request_removed', (context) => {
+  app.on('pull_request.review_request_removed', async (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       const { id, login } = requested_reviewer;
@@ -209,7 +202,7 @@ module.exports = (app) => {
 
 
   //Commit on a PR -- works (event triggered when a new commit is added to a PR) -- both points work --> dans merged -- DONE
-  app.on('pull_request.synchronize', context => {
+  app.on('pull_request.synchronize', async (context) => {
     const { action, repository, pull_request, sender} = context.payload;
     utils.addPRToBdIfNull(pull_request);
   
@@ -226,7 +219,7 @@ module.exports = (app) => {
   });
 
   //PR is being commented on
-  app.on('issue_comment.created', (context) => {
+  app.on('issue_comment.created', async (context) => {
     const { action, repository, issue, comment} = context.payload;
     if(issue.pull_request) {
       const { pull_request } = issue;
@@ -246,14 +239,14 @@ module.exports = (app) => {
   });
 
   //PR comment is being edited -- no points for it
-  app.on('issue_comment.edited', (context) => {
+  app.on('issue_comment.edited', async (context) => {
     const { action, repository,issue, comment} = context.payload;
  
 
   });
 
   //PR comment is being deleted - DONE
-  app.on('issue_comment.deleted', (context) => {
+  app.on('issue_comment.deleted', async (context) => {
     const { action, repository,issue, comment} = context.payload;
     if(issue.pull_request) {
       const { pull_request } = issue;
@@ -273,7 +266,7 @@ module.exports = (app) => {
   });
 
   // Existing comment on a PR is edited -- no points
-  app.on('pull_request_review.edited', (context) => {
+  app.on('pull_request_review.edited', async (context) => {
     const { action, repository, pull_request, review} = context.payload;
     if (pull_request.body) {
       app.log.info(`PR description: ${pull_request.body} \n`);
