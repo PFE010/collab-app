@@ -1,6 +1,4 @@
 var db_connexion = require("./db_connexion");
-var helper = require("../helper");
-
 
 class DatabaseFunctions {
     closeConnection() {
@@ -103,7 +101,14 @@ class DatabaseFunctions {
     addUserWithCallback(id_utilisateur, username, points, callback) {
         try {
             db_connexion.queryCallback(`
-                INSERT INTO utilisateur (id_utilisateur, username, points) VALUES ('${id_utilisateur}', '${username}', '${points}')`, callback);
+            INSERT INTO utilisateur (id_utilisateur, username, points)
+            SELECT '${id_utilisateur}', '${username}', '${points}'
+            FROM DUAL
+            WHERE NOT EXISTS (
+              SELECT id_utilisateur
+              FROM utilisateur
+              WHERE id_utilisateur = '${id_utilisateur}'
+            )`, callback);
         } catch (err) {
             console.error(err);
         }
@@ -111,7 +116,7 @@ class DatabaseFunctions {
 
     fetchUserWithCallback(id_utilisateur, callback) {
         try {
-            db_connexion.queryCallback(`SELECT * FROM utilisateur WHERE username = '${id_utilisateur}'`, callback);
+            db_connexion.queryCallback(`SELECT * FROM utilisateur WHERE id_utilisateur = '${id_utilisateur}'`, callback);
         }
         catch(err) {
             console.error(err);

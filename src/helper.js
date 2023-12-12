@@ -134,14 +134,13 @@ class Utils {
       if(data === undefined || data.length == 0) {
         this.db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, this.convertDate(pull_request.created_at), null, null, pull_request.state, null);
       }
-
       callback();
     })
   }
   
   addUserToBdIfNull(id, login, callback) {
-    this.db_functions.fetchUserWithCallback(id, (user) => {
-      if (user.length === 0) {
+    this.db_functions.fetchUserWithCallback(id, (data) => {
+      if (data === undefined || data.length == 0) {
         this.db_functions.addUserWithCallback(id, login, 0, () => {
           this.db_functions.getfulltableWithCallback('badge', (badges) => {
             badges.forEach(badge => {

@@ -87,14 +87,24 @@ module.exports = (app) => {
     utils.addPRToBdIfNull(pull_request, () => {
       const user = pull_request.user;
       // Create assigned user if needed  
-      utils.addUserToBdIfNull(user.id, user.login, () => {
-        utils.addUserToBdIfNull(assignee.id, assignee.login, () => {
-          db_functions.addPullRequestUser(assignee.id, pull_request.id, 'a');
+
+      if(user.id != assignee.id) {
+        utils.addUserToBdIfNull(user.id, user.login, () => {
+          utils.addUserToBdIfNull(assignee.id, assignee.login, () => {
+            db_functions.addPullRequestUser(assignee.id, pull_request.id, 'a');
+          
+            // Add 2 points to person who created the PR
+            db_functions.addPoints(2, pull_request.user.id);
+          });
+        });
+      } else {
+        utils.addUserToBdIfNull(user.id, user.login, () => {
+          db_functions.addPullRequestUser(user.id, pull_request.id, 'a');
         
           // Add 2 points to person who created the PR
-          db_functions.addPoints(2, pull_request.user.id);
+          db_functions.addPoints(2, user.id);
         });
-      });
+      }
     });
   });
 
@@ -104,15 +114,23 @@ module.exports = (app) => {
     utils.addPRToBdIfNull(pull_request, () => {
       // Create assigned user if needed
       const user = pull_request.user;
+      
+      if(user.id != assignee.id) {
+        utils.addUserToBdIfNull(user.id, user.login, () => {
+          utils.addUserToBdIfNull(assignee.id, assignee.login, () => {
+            db_functions.removePullRequestUser(assignee.id, pull_request.id, 'a');
   
-      utils.addUserToBdIfNull(user.id, user.login, () => {
-        utils.addUserToBdIfNull(assignee.id, assignee.login, () => {
-          db_functions.removePullRequestUser(assignee.id, pull_request.id, 'a');
-
-          // Add 2 points to person who created the PR
-          db_functions.removePoints(2, pull_request.user.id);
+            // Add 2 points to person who created the PR
+            db_functions.removePoints(2, pull_request.user.id);
+          });
+        }) 
+      } else {
+        utils.addUserToBdIfNull(user.id, user.login, () => {
+            db_functions.removePullRequestUser(user.id, pull_request.id, 'a');
+            // Add 2 points to person who created the PR
+            db_functions.removePoints(2, user.id);
         });
-      }) 
+      }
     });
   });
   
