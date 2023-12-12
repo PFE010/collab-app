@@ -26,13 +26,14 @@ const mockFunctions = {
   updateProgression: jest.fn(),
   fetchPrWithCallback: jest.fn(),
   fetchUserWithCallback: jest.fn(),
+  addUserIfNullWithCallback: jest.fn(),
 };
 
 jest.mock('../../src/services/db_functions', () => ({
   DatabaseFunctions: jest.fn().mockImplementation(() => mockFunctions),
 }));
 
-describe("My Probot app", () => {
+describe("Collab-app webhook events", () => {
   let probot;
 
   beforeEach(() => {
@@ -80,18 +81,6 @@ describe("My Probot app", () => {
     await probot.receive({ name: 'pull_request.reopened', payload: fixtures.pullRequestReopened });
     expect(mockFunctions.fetchPrWithCallback).toHaveBeenCalled();
   });
-
-  /*
-  test('handles pull request labeled event', async () => {
-    await probot.receive({ name: 'pull_request.labeled', payload: fixtures.pullRequestLabeled });
-    expect(mockFunctions.fetchPrWithCallback).toHaveBeenCalled();
-  });
-
-  test('handles pull request unlabeled event', async () => {
-    await probot.receive({ name: 'pull_request.unlabeled', payload: fixtures.pullRequestUnlabeled });
-    expect(mockFunctions.fetchPrWithCallback).toHaveBeenCalled();
-  });
-  */
 
   test('handles pull request edited event', async () => {
     await probot.receive({ name: 'pull_request.edited', payload: fixtures.pullRequestEdited });

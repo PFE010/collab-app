@@ -113,9 +113,10 @@ const fixtures = {
         },
         comment: {
             user: {
-                login: 'bonoUser'
-            }
-        } 
+                login: 'bonoUser',
+                id: 12123,
+            },
+        },
       },
     pullRequestReviewCommentEdited: {
         action: 'edited',
@@ -127,6 +128,12 @@ const fixtures = {
         action: 'deleted',
         pull_request: {
             id: 222324,
+        },
+        comment: {
+            user: {
+                login: 'bonoUser',
+                id: 12123,
+            },
         },
     },
     pullRequestReviewThreadResolved: {

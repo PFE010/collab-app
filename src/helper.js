@@ -130,6 +130,38 @@ class Utils {
           console.error('Error:', error);
       }
   } 
+
+  addPRToBdIfNull(pull_request, callback) {
+    this.db_functions.fetchPrWithCallback(pull_request.id, (data) => {
+      if(data === undefined || data.length == 0) {
+        this.db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, this.convertDate(pull_request.created_at), null, null, pull_request.state, null);
+      }
+
+      callback();
+    })
+  }
+
+  printPoints(assignee) {
+    this.db_functions.fetchUserWithCallback(assignee.login, (data) => {
+      console.log("----------");
+      console.log("User: " + data[0].username + " now has: " + data[0].points + " points.");
+    });
+  }
+
+  logEvent(context) {
+    const { action, repository, pull_request, assignee} = context.payload;
+
+    app.log.info(`Action done: ${action}\n 
+    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},
+    PR url: ${pull_request.url}, PR status: ${pull_request.state}, PR time updated: ${pull_request.updated_at}\n
+    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
+    Assigner : ${pull_request.user.login}, user_id: ${pull_request.user.id}\n
+    Assignee : ${pull_request.assignee?.login || null}, user_id: ${pull_request.assignee?.id}`);
+  }
+
+  initDB(){
+    
+  }
 }
 
   module.exports = Utils;
