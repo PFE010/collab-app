@@ -12,7 +12,8 @@
     "probot-app"
   ],
   "scripts": {
-    "start": "probot run ./index.js"
+    "start": "probot run ./index.js",
+    "test": "cross-env NODE_ENV=test jest"
   },
   "dependencies": {
     "@octokit/core": "^5.0.2",
@@ -30,6 +31,7 @@
     "@types/jest": "^29.0.0",
     "@types/mysql": "^2.15.24",
     "@types/node": "^18.18.10",
+    "cross-env": "^7.0.3",
     "jest": "^29.0.0",
     "nock": "^13.0.5",
     "smee-client": "^1.2.2",

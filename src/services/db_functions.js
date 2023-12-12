@@ -3,8 +3,6 @@ var helper = require("../helper");
 
 
 class DatabaseFunctions {
-    constructor() { }
-
     closeConnection() {
         db_connexion.endConnection();
     } 

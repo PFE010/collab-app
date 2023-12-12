@@ -1,16 +1,14 @@
-const Utils = require('../src/helper');
-const initializeApi = require('./services/api');
-
-module.exports = async (app) => {
+module.exports = (app) => {
   require('dotenv').config();
-  require('../src/helper');
+  const Utils = require('../src/helper');
 
   const { DatabaseFunctions } = require('./services/db_functions');
   const db_functions = new DatabaseFunctions();
   const utils = new Utils(db_functions);
 
-  // Initialize the API
-  const api = await initializeApi();
+  if (process.env.NODE_ENV !== 'test') {
+    utils.initApi();
+  }
 
   /*
   utils.initBadges();
@@ -30,24 +28,6 @@ module.exports = async (app) => {
     Assignee : ${pull_request.assignee?.login || null}, user_id: ${pull_request.assignee?.id}`);
   }
 
-  async function fetchPRDetails(url) {
-    const parsedUrl = new URL(url);
-
-    // Extracting repository owner, repo name, and pull request number
-    const pathParts = parsedUrl.pathname.split('/');
-    const owner = pathParts[2];
-    const repo = pathParts[3];
-    const prNumber = pathParts[5];
-
-      // Fetch pr
-      try {
-        // Use the API instance
-        const response = await api.fetchPRDetails(owner, repo, prNumber); 
-        return response;       
-      } catch (error) {
-          console.error('Error:', error);
-      }
-  } 
 
   function userAddPoints(login, id, points){
      //check if the user exists in the db
@@ -91,9 +71,9 @@ module.exports = async (app) => {
   } 
 
   function addPRToBdIfNull(pull_request, callback) {
+    console.log("ghi")
     db_functions.fetchPrWithCallback(pull_request.id, (data) => {
       if(data === undefined || data.length == 0) {
-        console.log("hi")
         db_functions.addPR(pull_request.id, pull_request.url, pull_request.body, pull_request.title, utils.convertDate(pull_request.created_at), null, null, pull_request.state, null);
       }
 
@@ -249,7 +229,6 @@ module.exports = async (app) => {
   app.on('pull_request.closed', (context) => {
     const { action, repository, pull_request } = context.payload;
     addPRToBdIfNull(pull_request, () => {
-      console.log(pull_request.state)
       db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
   
       // Check if the pull request is merged
@@ -279,17 +258,8 @@ module.exports = async (app) => {
    app.on('pull_request.review_request_removed', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
     addPRToBdIfNull(pull_request);
-
-    app.log.info(`Action done: ${action}\n 
-    PR number: #${pull_request.number}, PR id: ${pull_request.id}, PR time creation: ${pull_request.created_at},\n
-    PR time updated: ${pull_request.updated_at}, PR url: ${pull_request.url}, PR status: ${pull_request.state},\n
-    Removed reviewer requested name: ${requested_reviewer.login}, Removed reviewer requested id: ${requested_reviewer.id}
-    Repository id: ${repository.id}, owner: ${repository.owner.login}, name: ${repository.name} \n
-    PR creator: ${pull_request.user.login}, user_id: ${pull_request.user.id}\n`);
-
+  
     userRemovePoints(requested_reviewer.login, requested_reviewer.id, 1);
-    //printPoints(requested_reviewer);
-
   });
 
 
@@ -319,7 +289,7 @@ module.exports = async (app) => {
     if(issue.pull_request) {
       const { pull_request } = issue;
       const assignee = pull_request || null;
-      fetchPRDetails(pull_request.url).then((prDetails) => {
+      utils.fetchPRDetails(pull_request.url).then((prDetails) => {
         const properPR = prDetails.data;
         addPRToBdIfNull(properPR, () => {
           if(assignee && assignee != comment.user) {
@@ -385,8 +355,6 @@ module.exports = async (app) => {
   app.on('pull_request_review_comment.created', async (context) => {
     const { action, repository, pull_request, comment} = context.payload;
     addPRToBdIfNull(pull_request);
-  
-
 
     //points are given to the commenter
     db_functions.fetchUserWithCallback(comment.user.login, (data) => {

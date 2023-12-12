@@ -1,0 +1,21 @@
+{
+    "action": "unassigned",
+    "pull_request": {
+      "head": {
+        "ref": "hiimbex-patch-1"
+      },
+      "number": 123,
+      "assignee": {
+        "login": "username_unassigned"
+      }
+    },
+    "repository": {
+      "name": "testing-things",
+      "owner": {
+        "login": "hiimbex"
+      }
+    },
+    "installation": {
+      "id": 2
+    }
+}

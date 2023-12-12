@@ -1,10 +1,10 @@
 const dummyData = require('./assets/dummyData');
+const initializeApi = require('./services/api');
 
 class Utils {
   constructor(db) {
     this.db_functions = db;
   }
-
 
    // for testing only
   initPaliers() {
@@ -106,6 +106,30 @@ class Utils {
   printCallback(result) {
     console.log(result)
   }
+
+  async initApi() {
+    // Initialize the API
+    this.api = await initializeApi();
+  }
+
+  async fetchPRDetails(url) {
+    const parsedUrl = new URL(url);
+
+    // Extracting repository owner, repo name, and pull request number
+    const pathParts = parsedUrl.pathname.split('/');
+    const owner = pathParts[2];
+    const repo = pathParts[3];
+    const prNumber = pathParts[5];
+
+      // Fetch pr
+      try {
+        // Use the API instance
+        const response = await this.api.fetchPRDetails(owner, repo, prNumber); 
+        return response;       
+      } catch (error) {
+          console.error('Error:', error);
+      }
+  } 
 }
 
   module.exports = Utils;
