@@ -9,8 +9,8 @@ module.exports = (app) => {
 
   if (process.env.NODE_ENV !== 'test') {
     utils.initApi();
+    // utils.initDB();
   }
-  // utils.initDB();
 
   // Pull request open -- DONE
   app.on('pull_request.opened', async (context) => {
@@ -18,7 +18,7 @@ module.exports = (app) => {
     const { id, login } = sender;
 
     utils.addPRToBdIfNull(pull_request, () => {
-      db_functions.addUserIfNullWithCallback(id, login, 0, () => {    
+      utils.addUserToBdIfNull(id, login, () => {    
         // Add 2 points to person who created the PR
         db_functions.addPoints(1, id);
       });
@@ -39,16 +39,12 @@ module.exports = (app) => {
 
       if(labels?.length > 0) {
         labels.push(label.name);
-        console.log("push", labels)
       } else {
         labels = [label.name]
-        console.log("empty", labels)
       }
       db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at));
 
       if(count == 1) {
-        console.log("count", count)
-        console.log("label", label)
 
         assignee = pull_request.assignee || pull_request.assignees[0];
         if(assignee) {
@@ -71,18 +67,14 @@ module.exports = (app) => {
       labels = utils.labelStringToList(data[0].labels);
       count = utils.countLabels(data[0].labels);
       count -= 1;
-      console.log("labels", labels)
-      console.log("label", label)
 
       if(labels?.length > 0) {
         labels.filter(item => item !== label.name);
-        console.log("remove", labels)
       }
       db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at)); 
       if(count == 0) {
         assignee = pull_request.assignee || pull_request.assignees[0];
         if(assignee) {
-          console.log("else remove points")
           db_functions.removePoints(2, assignee.id);
         }
       }
@@ -95,8 +87,8 @@ module.exports = (app) => {
     utils.addPRToBdIfNull(pull_request, () => {
       const user = pull_request.user;
       // Create assigned user if needed  
-      db_functions.addUserIfNullWithCallback(user.id, user.login, 0, () => {
-        db_functions.addUserIfNullWithCallback(assignee.id, assignee.login, 0, () => {
+      utils.addUserToBdIfNull(user.id, user.login, () => {
+        utils.addUserToBdIfNull(assignee.id, assignee.login, () => {
           db_functions.addPullRequestUser(assignee.id, pull_request.id, 'a');
         
           // Add 2 points to person who created the PR
@@ -113,8 +105,8 @@ module.exports = (app) => {
       // Create assigned user if needed
       const user = pull_request.user;
   
-      db_functions.addUserIfNullWithCallback(user.id, user.login, 0, () => {
-        db_functions.addUserIfNullWithCallback(assignee.id, assignee.login, 0, () => {
+      utils.addUserToBdIfNull(user.id, user.login, () => {
+        utils.addUserToBdIfNull(assignee.id, assignee.login, () => {
           db_functions.removePullRequestUser(assignee.id, pull_request.id, 'a');
 
           // Add 2 points to person who created the PR
@@ -134,7 +126,7 @@ module.exports = (app) => {
         db_functions.editPRField(pull_request.id, 'description', pull_request.body, utils.convertDate(pull_request.updated_at));
   
         const { id, login } = sender;
-        db_functions.addUserIfNullWithCallback(id, login, 0, () => {
+        utils.addUserToBdIfNull(id, login, () => {
           db_functions.addPoints(1, id);
           utils.updateProgression('comment', id, 1);
         });
@@ -155,7 +147,7 @@ module.exports = (app) => {
     const { action, repository, pull_request } = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
       db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
-      db_functions.addUserIfNullWithCallback(pull_request.assignee.id, pull_request.assignee.login, 0, () => {
+      utils.addUserToBdIfNull(pull_request.assignee.id, pull_request.assignee.login, () => {
         // Check if the pull request is merged
         if (pull_request.merged) {
           // add points for merge
@@ -176,9 +168,8 @@ module.exports = (app) => {
   app.on('pull_request.review_requested', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
-      console.log("pr", pull_request);
       const { id, login } = requested_reviewer;
-      db_functions.addUserIfNullWithCallback(id, login, 0, () => {
+      utils.addUserToBdIfNull(id, login, () => {
         db_functions.addPullRequestUser(id, pull_request.id, 'r');
         db_functions.addPoints(1, requested_reviewer.id);
       });
@@ -189,9 +180,8 @@ module.exports = (app) => {
   app.on('pull_request.review_request_removed', (context) => {
     const { action, repository, pull_request, requested_reviewer} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
-      console.log("pr", pull_request);
       const { id, login } = requested_reviewer;
-      db_functions.addUserIfNullWithCallback(id, login, 0, () => {
+      utils.addUserToBdIfNull(id, login, () => {
         db_functions.removePullRequestUser(id, pull_request.id, 'r');
         db_functions.removePoints(1, requested_reviewer.id);
       });
@@ -227,7 +217,7 @@ module.exports = (app) => {
         const properPR = prDetails.data;
         utils.addPRToBdIfNull(properPR, () => {
           if(assignee && assignee != comment.user) {
-            db_functions.addUserIfNullWithCallback(comment.user.id, comment.user.login, 0, () => {
+            utils.addUserToBdIfNull(comment.user.id, comment.user.login, () => {
               db_functions.addPoints(1, comment.user.id);
               utils.updateProgression('comment', comment.user.id, 1);
             });
@@ -254,7 +244,7 @@ module.exports = (app) => {
         const properPR = prDetails.data;
         utils.addPRToBdIfNull(properPR, () => {
           if(assignee && assignee != comment.user) {
-            db_functions.addUserIfNullWithCallback(comment.user.id, comment.user.login, 0, () => {
+            utils.addUserToBdIfNull(comment.user.id, comment.user.login, () => {
               db_functions.removePoints(1, comment.user.id);
               utils.updateProgression('comment', comment.user.id, -1);
             });
@@ -276,7 +266,7 @@ module.exports = (app) => {
   app.on('pull_request_review.submitted', async (context) => {
     const { action, repository, pull_request, review} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
-      db_functions.addUserIfNullWithCallback(review.user.id, review.user.login, 0, () => {
+      utils.addUserToBdIfNull(review.user.id, review.user.login, () => {
         if(review.state === "changes_requested"){
           db_functions.addPoints(2, review.user.id);
           utils.updateProgression('comment', review.user.id, 1);      }
@@ -292,7 +282,7 @@ module.exports = (app) => {
   app.on('pull_request_review_comment.created', async (context) => {
     const { action, repository, pull_request, comment} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
-      db_functions.addUserIfNullWithCallback(comment.user.id, comment.user.login, 0, () => {
+      utils.addUserToBdIfNull(comment.user.id, comment.user.login, () => {
         db_functions.addPoints(1, comment.user.id);
         utils.updateProgression('comment', comment.user.id, 1);
       });
@@ -308,7 +298,7 @@ module.exports = (app) => {
   app.on('pull_request_review_comment.deleted', async (context) => {
     const { action, repository, pull_request, comment, sender} = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
-      db_functions.addUserIfNullWithCallback(comment.user.id, comment.user.login, 0, () => {
+      utils.addUserToBdIfNull(comment.user.id, comment.user.login, () => {
         db_functions.removePoints(1, comment.user.id);
         utils.updateProgression('comment', comment.user.id, -1);
       });
@@ -319,8 +309,6 @@ module.exports = (app) => {
   app.on('pull_request_review_thread.resolved', async (context) => {
     const { action, repository, pull_request, sender, thread } = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
-      console.log("pull")
-      console.log("reactions", thread.comments[0].reactions['+1']);
   
   
       // pour chaque comment on check le role du user sur le comment 

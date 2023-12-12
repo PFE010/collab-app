@@ -42,9 +42,7 @@ class Utils {
   initBadgePalier() {
     this.db_functions.getfulltableWithCallback('badge', (badges) => {
       badges.forEach(badge => {
-        console.log("badge", badge)
         const paliersBadge = dummyData.palierData.filter(palier => palier.titre_palier.includes(badge.titre))
-        console.log("paliers", paliersBadge)
         paliersBadge.forEach(palier => {
           this.db_functions.getPalierWithCallback(palier.titre_palier, (data) => {
             this.db_functions.addBadgePaliers(badge.id_badge, data[0].id_palier);
@@ -140,6 +138,22 @@ class Utils {
       callback();
     })
   }
+  
+  addUserToBdIfNull(id, login, callback) {
+    this.db_functions.fetchUserWithCallback(id, (user) => {
+      if (user.length === 0) {
+        this.db_functions.addUserWithCallback(id, login, 0, () => {
+          this.db_functions.getfulltableWithCallback('badge', (badges) => {
+            badges.forEach(badge => {
+              const { id_badge } = badge;
+              this.db_functions.addUserBadge(id, id_badge, 0, 0);
+            });
+          })
+        })
+      }
+      callback();
+    })
+  }
 
   printPoints(assignee) {
     this.db_functions.fetchUserWithCallback(assignee.login, (data) => {
@@ -160,7 +174,10 @@ class Utils {
   }
 
   initDB(){
-    
+    this.initBadges();
+    this.initPaliers();
+    this.initUserBadges();
+    this.initBadgePalier();
   }
 }
 

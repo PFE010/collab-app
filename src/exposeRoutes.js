@@ -15,7 +15,6 @@ module.exports = async (app, getRouter) => {
     // Get all pull requests
     router.get("/pullRequests", (req, res) => {
     db_functions.fetchAllPr((result) => {
-        console.log(result);
         res.send(result)});
     });
 
@@ -39,7 +38,6 @@ module.exports = async (app, getRouter) => {
                 badges: badges
                 }
             });
-            console.log(response)
             res.send(response);
             })
         })

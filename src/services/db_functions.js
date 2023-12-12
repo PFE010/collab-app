@@ -100,18 +100,18 @@ class DatabaseFunctions {
         }
     }
 
-    addUserIfNullWithCallback(id_utilisateur, username, points, callback) {
+    addUserWithCallback(id_utilisateur, username, points, callback) {
         try {
             db_connexion.queryCallback(`
-                INSERT IGNORE INTO utilisateur (id_utilisateur, username, points) VALUES ('${id_utilisateur}', '${username}', '${points}')`, callback);
+                INSERT INTO utilisateur (id_utilisateur, username, points) VALUES ('${id_utilisateur}', '${username}', '${points}')`, callback);
         } catch (err) {
             console.error(err);
         }
     }
 
-    fetchUserWithCallback(username, callback) {
+    fetchUserWithCallback(id_utilisateur, callback) {
         try {
-            db_connexion.queryValuesCallback(`SELECT * FROM utilisateur WHERE username = ?`, username, callback);
+            db_connexion.queryCallback(`SELECT * FROM utilisateur WHERE username = '${id_utilisateur}'`, callback);
         }
         catch(err) {
             console.error(err);
@@ -166,7 +166,6 @@ class DatabaseFunctions {
 
     getPalierWithCallback(titre, callback) {
         try {
-            console.log("titre", titre)
             db_connexion.queryCallback(`SELECT * FROM palier WHERE titre_palier = '${titre}'`, callback);
         }
         catch(err) {
@@ -212,7 +211,6 @@ class DatabaseFunctions {
     }
 
     addPullRequestUser(userId, prId, role) {
-        console.log("values", userId, prId, role)
         try{
             db_connexion.queryValues(`INSERT INTO utilisateur_pr (id_utilisateur, id_pull_request, role) VALUES ('${userId}', '${prId}', '${role}')`);
         }
@@ -222,7 +220,6 @@ class DatabaseFunctions {
     }
 
     removePullRequestUser(userId, prId, role) {
-        console.log("values", userId, prId, role)
         try{
             db_connexion.queryValues(`DELETE FROM utilisateur_pr WHERE id_utilisateur = '${userId}' AND id_pull_request = '${prId}' AND role = '${role}';`);
         }
@@ -277,7 +274,6 @@ class DatabaseFunctions {
     } 
 
     updateProgressionWithCallback(id_utilisateur, id_badge, increment, callback) {
-        console.log("query", id_utilisateur, id_badge, increment)
         try{
             return db_connexion.queryCallback(`UPDATE utilisateur_badge SET progression = progression + ${increment} WHERE id_utilisateur = ${id_utilisateur} AND id_badge = ${id_badge}`, callback);
         }
