@@ -7,6 +7,7 @@ module.exports = async (app, getRouter) => {
 
     // Get an express router to expose new HTTP endpoints
     const router = getRouter("/collab-app");
+    router.use(cors());
 
     // Use any middleware
     router.use(require("express").static("public"));
