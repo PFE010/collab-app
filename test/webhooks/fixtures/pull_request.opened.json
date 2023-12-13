@@ -9,6 +9,10 @@
     "name": "testing-things",
     "owner": {
       "login": "hiimbex"
+    },
+    "assignee": {
+      "id": 123,
+      "login": "bonoUser"
     }
   },
   "installation": {
