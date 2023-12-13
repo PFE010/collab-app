@@ -173,8 +173,8 @@ class Utils {
   }
 
   initDB(){
-    this.initBadges();
-    this.initPaliers();
+    //this.initBadges();
+    //this.initPaliers();
     this.initUserBadges();
     this.initBadgePalier();
   }

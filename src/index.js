@@ -28,8 +28,15 @@ module.exports = (app) => {
   //PR is being labeled --- works
   app.on('pull_request.labeled', async (context) => {
     const { action, repository, pull_request, label, sender} = context.payload;
-    const { id, login } = pull_request.assignee;
 
+    let assignee;
+    if(pull_request.assignee){
+      assignee = pull_request.assignee;
+    } else {
+      assignee = pull_request.user;
+    }
+    const { id, login } = assignee;
+  
     utils.addPRToBdIfNull(pull_request, () => {
       db_functions.fetchPrWithCallback(pull_request.id, (data) => {
 
@@ -44,6 +51,7 @@ module.exports = (app) => {
           db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(labels), utils.convertDate(pull_request.updated_at));
           if(sender.id == id) {
             db_functions.addPoints(1, id);
+            utils.updateProgression('label', id, +1);
           }
         });
       });
@@ -53,7 +61,14 @@ module.exports = (app) => {
   //PR is being unlabeled --- works
   app.on('pull_request.unlabeled', async (context) => {
     const { action, repository, pull_request, label, sender} = context.payload;
-    const { id, login } = pull_request.assignee;
+
+    let assignee;
+    if(pull_request.assignee){
+      assignee = pull_request.assignee;
+    } else {
+      assignee = pull_request.user;
+    }
+    const { id, login } = assignee;
   
     utils.addPRToBdIfNull(pull_request, () => {
       db_functions.fetchPrWithCallback(pull_request.id, (data) => {
@@ -68,6 +83,7 @@ module.exports = (app) => {
           db_functions.editPRField(pull_request.id, 'labels', utils.fromArrayToLabelString(newLabels), utils.convertDate(pull_request.updated_at));
           if(sender.id == id) {
             db_functions.removePoints(1, id);
+            utils.updateProgression('label', id, -1);
           }
         });
       });
@@ -77,6 +93,7 @@ module.exports = (app) => {
   //PR assign -- works -- DONE
   app.on('pull_request.assigned', async (context) => {
     const { action, repository, pull_request, assignee} = context.payload;
+    
     utils.addPRToBdIfNull(pull_request, () => {
       const user = pull_request.user;
       // Create assigned user if needed  
@@ -131,6 +148,7 @@ module.exports = (app) => {
   //PR is edited when the description is added or edited -- DONE
   app.on('pull_request.edited', async (context) => {
     const { action, repository, pull_request, changes, sender} = context.payload;
+
     utils.addPRToBdIfNull(pull_request, () => {
       // Check if the pull request has a description
       if (pull_request.body) {
@@ -156,20 +174,31 @@ module.exports = (app) => {
   //PR closed  points only when merged 
   app.on('pull_request.closed', async (context) => {
     const { action, repository, pull_request } = context.payload;
+    let assignee;
+    if(pull_request.assignee){
+      assignee = pull_request.assignee;
+    } else {
+      assignee = pull_request.user;
+    }
+    const { id, login } = assignee;
+  
     utils.addPRToBdIfNull(pull_request, () => {
       db_functions.editPRField(pull_request.id, 'status', pull_request.state, utils.convertDate(pull_request.updated_at));
-      utils.addUserToBdIfNull(pull_request.assignee.id, pull_request.assignee.login, () => {
+      utils.addUserToBdIfNull(id, login, () => {
         // Check if the pull request is merged
         if (pull_request.merged) {
           // add points for merge
           db_functions.editPRField(pull_request.id, 'date_merge',  utils.convertDate(pull_request.merged_at), utils.convertDate(pull_request.updated_at));
-          db_functions.addPoints(4, pull_request.assignee.id);
-          utils.updateProgression('merge', pull_request.assignee.id, 1);
+          db_functions.addPoints(4, id);
+          utils.updateProgression('merge', id, 1);
 
           // add points for commits / additions
-          const points = Math.floor(pull_request.additions / 10);
-          db_functions.addPoints(points, pull_request.assignee.id);
-          utils.updateProgression('commit', pull_request.assignee.id, points);
+          let points = Math.floor(pull_request.additions / 10);
+          if(points == 0){
+            points =1;
+          }
+          db_functions.addPoints(points, id);
+          utils.updateProgression('commit', id, points);
         }
       });
     }); 
@@ -204,18 +233,17 @@ module.exports = (app) => {
   //Commit on a PR -- works (event triggered when a new commit is added to a PR) -- both points work --> dans merged -- DONE
   app.on('pull_request.synchronize', async (context) => {
     const { action, repository, pull_request, sender} = context.payload;
-    utils.addPRToBdIfNull(pull_request);
+    utils.addPRToBdIfNull(pull_request, () => {
+      if (pull_request.body) {
+        app.log.info(`PR description: ${pull_request.body} \n`);
+      }
   
-    if (pull_request.body) {
-      app.log.info(`PR description: ${pull_request.body} \n`);
-    }
-
-    if(sender.id != pull_request.user.id){
-      app.log.info(`There was a suggestion of code done by: ${sender.login} on the PR which belongs to ${pull_request.user.login} \n`);
-    }else{
-      console.log("Pr user is the one who committed")
-    }
-
+      if(sender.id != pull_request.user.id){
+        app.log.info(`There was a suggestion of code done by: ${sender.login} on the PR which belongs to ${pull_request.user.login} \n`);
+      }else{
+        console.log("Pr user is the one who committed")
+      }
+    });
   });
 
   //PR is being commented on
@@ -223,10 +251,14 @@ module.exports = (app) => {
     const { action, repository, issue, comment} = context.payload;
     if(issue.pull_request) {
       const { pull_request } = issue;
-      const assignee = pull_request || null;
+      const  assignee = pull_request.assignee ? pull_request.assignee : pull_request.user; 
+
+    
       utils.fetchPRDetails(pull_request.url).then((prDetails) => {
         const properPR = prDetails.data;
         utils.addPRToBdIfNull(properPR, () => {
+          const  assignee = properPR.assignee ? properPR.assignee : properPR.user; 
+
           if(assignee && assignee != comment.user) {
             utils.addUserToBdIfNull(comment.user.id, comment.user.login, () => {
               db_functions.addPoints(1, comment.user.id);
@@ -250,10 +282,12 @@ module.exports = (app) => {
     const { action, repository,issue, comment} = context.payload;
     if(issue.pull_request) {
       const { pull_request } = issue;
-      const assignee = pull_request || null;
+
       utils.fetchPRDetails(pull_request.url).then((prDetails) => {
         const properPR = prDetails.data;
         utils.addPRToBdIfNull(properPR, () => {
+          const  assignee = properPR.assignee ? properPR.assignee : properPR.user; 
+
           if(assignee && assignee != comment.user) {
             utils.addUserToBdIfNull(comment.user.id, comment.user.login, () => {
               db_functions.removePoints(1, comment.user.id);
@@ -321,7 +355,7 @@ module.exports = (app) => {
     const { action, repository, pull_request, sender, thread } = context.payload;
     utils.addPRToBdIfNull(pull_request, () => {
   
-  
+      db_functions.addPoints(1, sender.id);
       // pour chaque comment on check le role du user sur le comment 
       thread.comments.forEach(comment => {
         
