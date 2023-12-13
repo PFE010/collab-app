@@ -15,9 +15,16 @@ class DatabaseFunctions {
     }
     
     addPR(prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels) {
-        let values = [prId, url, description, titre, date_creation, date_merge, date_last_update, status, labels];
         try {
-            db_connexion.queryValues(`INSERT INTO pull_request (id_pull_request, url, description, titre, date_creation, date_merge, date_last_update, status, labels) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, values);
+            db_connexion.query(`
+            INSERT INTO pull_request (id_pull_request, url, description, titre, date_creation, date_merge, date_last_update, status, labels)
+            SELECT '${prId}', '${url}', '${description}', '${titre}', '${date_creation}', ${date_merge}, ${date_last_update}, '${status}', '${labels}'
+            FROM DUAL
+            WHERE NOT EXISTS (
+                SELECT id_pull_request
+                FROM pull_request
+                WHERE id_pull_request = '${prId}'
+            )`);
         }
         catch(err) {
             console.error(err);
